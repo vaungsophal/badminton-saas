@@ -67,28 +67,34 @@ const stats = [
 export default function AdminDashboardPage() {
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-                <p className="text-gray-600">Welcome back, Platform Manager. Here's what's happening today.</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Dashboard Overview</h1>
+                    <p className="text-gray-500 font-medium">Welcome back, Platform Manager. Here's your real-time data.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Live Updates</span>
+                </div>
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat) => (
-                    <Card key={stat.label} className="p-6 hover:shadow-md transition-shadow">
+                    <Card key={stat.label} className="p-6 hover:shadow-xl transition-all duration-300 border-gray-100 group">
                         <div className="flex items-start justify-between">
-                            <div className="bg-blue-50 p-3 rounded-xl">
-                                <stat.icon className="w-6 h-6 text-blue-600" />
+                            <div className="bg-blue-50 p-3 rounded-2xl group-hover:bg-blue-600 transition-colors duration-300">
+                                <stat.icon className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
                             </div>
-                            <div className={`flex items-center gap-1 text-sm font-medium ${stat.isPositive ? 'text-green-600' : 'text-red-600'
+                            <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${stat.isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
                                 }`}>
                                 {stat.change}
-                                {stat.isPositive ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                                {stat.isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
                             </div>
                         </div>
-                        <div className="mt-4">
-                            <p className="text-sm text-gray-400 font-medium uppercase tracking-wider">{stat.label}</p>
-                            <h3 className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</h3>
+                        <div className="mt-5">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{stat.label}</p>
+                            <h3 className="text-2xl font-black text-gray-900 mt-1">{stat.value}</h3>
                         </div>
                     </Card>
                 ))}

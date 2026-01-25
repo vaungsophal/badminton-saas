@@ -74,7 +74,7 @@ export function RealtimeNotifications() {
 
       {/* Notifications Panel */}
       {showPanel && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+        <div className="absolute right-[-20px] sm:right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
           </div>
@@ -84,9 +84,8 @@ export function RealtimeNotifications() {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                    !notification.read ? 'bg-blue-50' : ''
-                  }`}
+                  className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${!notification.read ? 'bg-blue-50' : ''
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 cursor-pointer" onClick={() => markAsRead(notification.id)}>

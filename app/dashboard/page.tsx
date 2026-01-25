@@ -62,38 +62,38 @@ function CustomerDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 bg-blue-50 border-blue-200">
+        <Card className="p-6 bg-blue-50 border-blue-200 hover:shadow-md transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center gap-4">
-            <div className="bg-blue-600 rounded-lg p-3">
+            <div className="bg-blue-600 rounded-lg p-3 shadow-blue-200 shadow-lg">
               <Clock className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Upcoming Bookings</p>
-              <p className="text-2xl font-bold text-gray-900">3</p>
+              <p className="text-sm text-gray-600 font-medium tracking-wide uppercase">Upcoming</p>
+              <p className="text-3xl font-bold text-gray-900 leading-none mt-1">3</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 bg-green-50 border-green-200">
+        <Card className="p-6 bg-green-50 border-green-200 hover:shadow-md transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center gap-4">
-            <div className="bg-green-600 rounded-lg p-3">
+            <div className="bg-green-600 rounded-lg p-3 shadow-green-200 shadow-lg">
               <Users className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Players</p>
-              <p className="text-2xl font-bold text-gray-900">12</p>
+              <p className="text-sm text-gray-600 font-medium tracking-wide uppercase">Players</p>
+              <p className="text-3xl font-bold text-gray-900 leading-none mt-1">12</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 bg-purple-50 border-purple-200">
+        <Card className="p-6 bg-purple-50 border-purple-200 hover:shadow-md transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center gap-4">
-            <div className="bg-purple-600 rounded-lg p-3">
+            <div className="bg-purple-600 rounded-lg p-3 shadow-purple-200 shadow-lg">
               <MapPin className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Favorite Courts</p>
-              <p className="text-2xl font-bold text-gray-900">5</p>
+              <p className="text-sm text-gray-600 font-medium tracking-wide uppercase">Favorite</p>
+              <p className="text-3xl font-bold text-gray-900 leading-none mt-1">5</p>
             </div>
           </div>
         </Card>
@@ -112,28 +112,37 @@ function CustomerDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {featuredCourts.map((court) => (
-            <Card key={court.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="h-40 bg-gradient-to-br from-blue-400 to-blue-600" />
+            <Card key={court.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 group border-gray-100">
+              <div className="h-40 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-sm font-bold text-blue-600 shadow-sm">
+                  ⭐ {court.rating}
+                </div>
+              </div>
               <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{court.name}</h3>
-                <div className="space-y-2 mb-4">
+                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{court.name}</h3>
+                <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2 text-gray-600">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">{court.location}</span>
+                    <div className="bg-gray-100 p-1.5 rounded-full">
+                      <MapPin className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-sm font-medium">{court.location}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
-                    <Users className="w-4 h-4" />
-                    <span className="text-sm">{court.courts} courts available</span>
+                    <div className="bg-gray-100 p-1.5 rounded-full">
+                      <Users className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-sm font-medium">{court.courts} courts available</span>
                   </div>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center pt-4 border-t border-gray-50">
                   <div>
-                    <p className="text-2xl font-bold text-blue-600">${court.pricePerHour}</p>
-                    <p className="text-xs text-gray-500">per hour</p>
+                    <p className="text-2xl font-black text-blue-600">${court.pricePerHour}</p>
+                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">per hour</p>
                   </div>
                   <Button
                     onClick={() => router.push(`/dashboard/book/${court.id}`)}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 px-6 font-bold"
                   >
                     Book Now
                   </Button>

@@ -103,8 +103,8 @@ export default function CompanyDashboard() {
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Owner Dashboard</h1>
-        <p className="text-gray-600 mt-2">Welcome back! Here's your badminton business overview.</p>
+        <h1 className="text-3xl font-bold text-gray-900 text-blue-600">Club Owner Dashboard</h1>
+        <p className="text-gray-500 font-medium mt-2">Welcome back! Here's your badminton business overview.</p>
       </div>
 
       {error && (

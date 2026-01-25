@@ -41,10 +41,8 @@ export default function CompanyLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       <CompanyNav user={user} />
-      <main className="flex">
-        <div className="flex-1">
-          {children}
-        </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
       </main>
     </div>
   )
