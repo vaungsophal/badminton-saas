@@ -15,8 +15,11 @@ export default function DashboardLayout({
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  useEffect(() => {
-    if (!loading && !user) {
+useEffect(() => {
+    if (loading) return // Don't redirect while loading
+
+    if (!user) {
+      console.log('Dashboard layout - no user, redirecting to auth')
       router.push('/auth')
     }
   }, [user, loading, router])

@@ -14,13 +14,17 @@ export default function CompanyLayout({
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  useEffect(() => {
-    if (!loading && !user) {
+useEffect(() => {
+    if (loading) return // Don't redirect while loading
+
+    if (!user) {
+      console.log('Company layout - no user, redirecting to auth')
       router.push('/auth')
       return
     }
 
-    if (!loading && user && user.role !== 'club_owner') {
+    if (user.role !== 'club_owner') {
+      console.log('Company layout - user role mismatch, redirecting to dashboard. User role:', user.role)
       router.push('/dashboard')
     }
   }, [user, loading, router])

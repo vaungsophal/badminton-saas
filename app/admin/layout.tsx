@@ -23,13 +23,17 @@ export default function AdminLayout({
     const { user, loading, signOut } = useAuth()
     const router = useRouter()
 
-    useEffect(() => {
-        if (!loading && !user) {
+useEffect(() => {
+        if (loading) return // Don't redirect while loading
+
+        if (!user) {
+            console.log('Admin layout - no user, redirecting to auth')
             router.push('/auth')
             return
         }
 
-        if (!loading && user && user.role !== 'admin') {
+        if (user.role !== 'admin') {
+            console.log('Admin layout - user role mismatch, redirecting. User role:', user.role)
             router.push(user.role === 'club_owner' ? '/company' : '/dashboard')
         }
     }, [user, loading, router])

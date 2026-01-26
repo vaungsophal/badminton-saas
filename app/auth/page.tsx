@@ -48,11 +48,14 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         const result = await response.json()
 
-        if (result.token && result.user) {
+if (result.token && result.user) {
           localStorage.setItem('auth_token', result.token)
           console.log('User signed up successfully:', result.user.role)
-          // Use the returned user role for accurate redirection
-          redirectByRole(result.user.role as UserRole)
+          
+          // Trigger a page reload to ensure auth context picks up the new token
+          // This is more reliable than relying on the auth context to update immediately
+          window.location.href = result.user.role === 'admin' ? '/admin' : 
+                               result.user.role === 'club_owner' ? '/company' : '/dashboard'
         } else {
           throw new Error('Sign up failed - no token received')
         }
@@ -73,11 +76,14 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         const result = await response.json()
 
-        if (result.token && result.user) {
+if (result.token && result.user) {
           localStorage.setItem('auth_token', result.token)
           console.log('User signed in successfully:', result.user.role)
-          // Use the verified user role from database for accurate redirection
-          redirectByRole(result.user.role as UserRole)
+          
+          // Trigger a page reload to ensure auth context picks up the new token
+          // This is more reliable than relying on the auth context to update immediately
+          window.location.href = result.user.role === 'admin' ? '/admin' : 
+                               result.user.role === 'club_owner' ? '/company' : '/dashboard'
         } else {
           throw new Error('Sign in failed - no token received')
         }
@@ -90,25 +96,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     }
   }
 
-const redirectByRole = (userRole: UserRole) => {
-    console.log('Redirecting user with role:', userRole)
-    
-    switch (userRole) {
-      case 'admin':
-        console.log('Redirecting to admin dashboard')
-        router.push('/admin')
-        break
-      case 'club_owner':
-        console.log('Redirecting to company dashboard')
-        router.push('/company')
-        break
-      case 'customer':
-      default:
-        console.log('Redirecting to customer dashboard')
-        router.push('/dashboard')
-        break
-    }
-  }
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
