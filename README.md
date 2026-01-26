@@ -10,10 +10,10 @@ The platform connects **players**, **court owners**, and **administrators** in o
 - Browse badminton clubs and courts
 - Search courts by location, price, and availability
 - Book courts by selecting date and time slot
-- Online payments (Stripe / PayPal)
+- Online payments (ABA Payway)
 - View and manage bookings
 
-### 🏟 Court Owner
+### 🏟 Club/Court Owner
 - Create and manage badminton clubs
 - Add, edit, and delete badminton courts
 - Set pricing per hour and available time slots
@@ -31,11 +31,11 @@ The platform connects **players**, **court owners**, and **administrators** in o
 
 ## ⚙️ Tech Stack
 - **Frontend:** Next.js, React, Tailwind CSS
-- **Backend:** Node.js, Express / NestJS
-- **Database:** PostgreSQL / MongoDB
+- **Backend:** Node.js, NestJS
+- **Database:** PostgreSQL
 - **ORM:** Prisma / Mongoose
 - **Maps:** Google Maps API
-- **Payments:** Stripe
+- **Payments:** ABA Payway
 - **Storage:** Cloudinary / AWS S3
 
 ## 🔐 Core Capabilities
