@@ -51,7 +51,6 @@ export default function SettingsPage() {
 
   async function handleSignOut() {
     await signOut()
-    router.push('/auth')
   }
 
   return (

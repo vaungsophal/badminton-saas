@@ -1,5 +1,5 @@
 import { stripe } from '@/lib/stripe'
-import { supabase } from '@/lib/auth'
+import { db } from '@/lib/db'
 import { sendBookingConfirmation } from '@/lib/email'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -25,26 +25,34 @@ export async function POST(request: Request) {
     const session = event.data.object as any
 
     if (session.payment_status === 'paid' && session.metadata?.bookingId) {
-      try {
+try {
         // Update booking status
-        await supabase
-          .from('bookings')
-          .update({ status: 'paid' })
-          .eq('id', session.metadata.bookingId)
+        await db.query(
+          'UPDATE bookings SET status = $1, updated_at = NOW() WHERE id = $2',
+          ['paid', session.metadata.bookingId]
+        )
 
         // Get booking details to send confirmation
-        const { data: booking } = await supabase
-          .from('bookings')
-          .select('*, user_profiles(email)')
-          .eq('id', session.metadata.bookingId)
-          .single()
+        const booking = await db.get(
+          `SELECT b.*, up.email 
+           FROM bookings b 
+           JOIN user_profiles up ON b.user_id = up.id 
+           WHERE b.id = $1`,
+          [session.metadata.bookingId]
+        )
 
-        if (booking && booking.user_profiles?.email) {
+        if (booking && booking.email) {
+          // Get time slot details
+          const timeSlot = await db.get(
+            'SELECT date, start_time, end_time FROM time_slots WHERE id = $1',
+            [booking.time_slot_id]
+          )
+
           // Send confirmation email
-          await sendBookingConfirmation(booking.user_profiles.email, {
+          await sendBookingConfirmation(booking.email, {
             courtName: session.metadata.courtName || 'Court',
-            date: booking.date || '',
-            time: booking.time || '',
+            date: timeSlot?.date || '',
+            time: `${timeSlot?.start_time} - ${timeSlot?.end_time}` || '',
             amount: session.amount_total ? session.amount_total / 100 : 0,
             bookingId: session.metadata.bookingId,
           })

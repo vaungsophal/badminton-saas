@@ -28,7 +28,6 @@ export function CompanyNav({ user }: CompanyNavProps) {
 
   const handleSignOut = async () => {
     await signOut()
-    router.push('/auth')
   }
 
   const isActive = (path: string) => pathname.startsWith(path)
@@ -63,11 +62,10 @@ export function CompanyNav({ user }: CompanyNavProps) {
                 <Link
                   key={item.path}
                   href={item.path}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    active
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${active
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   {item.label}
@@ -81,15 +79,16 @@ export function CompanyNav({ user }: CompanyNavProps) {
             <div className="hidden sm:flex items-center gap-3">
               <div className="text-sm text-right">
                 <p className="text-gray-900 font-medium">{user?.email}</p>
-                <p className="text-gray-500 text-xs">Court Owner</p>
+                <p className="text-gray-500 text-xs text-blue-600 font-bold capitalize">{user?.role?.replace('_', ' ') || 'Club Owner'}</p>
               </div>
               <Button
                 onClick={handleSignOut}
                 variant="ghost"
                 size="sm"
-                className="gap-2"
+                className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
               >
                 <LogOut className="w-4 h-4" />
+                <span className="hidden lg:inline font-medium">Sign Out</span>
               </Button>
             </div>
 
@@ -113,11 +112,10 @@ export function CompanyNav({ user }: CompanyNavProps) {
                 <Link
                   key={item.path}
                   href={item.path}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    active
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${active
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
                   onClick={() => setMenuOpen(false)}
                 >
                   <Icon className="w-4 h-4" />

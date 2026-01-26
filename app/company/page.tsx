@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
-import { supabase } from '@/lib/auth'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -36,52 +36,17 @@ export default function CompanyDashboard() {
     try {
       if (!user?.id) return
 
-      // Fetch clubs
-      const { data: clubs } = await supabase
-        .from('courts')
-        .select('id, club_name, owner_id')
-        .eq('owner_id', user.id)
-        .limit(1)
-
-      // Fetch total bookings
-      const { data: bookings, count: bookingCount } = await supabase
-        .from('bookings')
-        .select('id, total_price, booking_date', { count: 'exact' })
-        .eq('owner_id', user.id)
-
-      // Fetch courts
-      const { data: courts, count: courtCount } = await supabase
-        .from('courts')
-        .select('id', { count: 'exact' })
-        .eq('owner_id', user.id)
-
-      // Calculate total revenue
-      const totalRevenue = bookings?.reduce((sum: number, b: any) => sum + (b.total_price || 0), 0) || 0
-
-      // Group bookings by date for chart
-      const bookingsByDate: any = {}
-      bookings?.forEach((b: any) => {
-        const date = b.booking_date?.split('T')[0] || 'Unknown'
-        bookingsByDate[date] = (bookingsByDate[date] || 0) + 1
-      })
-
-      const chartData = Object.entries(bookingsByDate)
-        .slice(-7)
-        .map(([date, count]) => ({
-          date: new Date(date as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          bookings: count,
-        }))
-
+      // TODO: Replace with proper API calls
       setStats({
-        totalClubs: clubs?.length || 1,
-        totalCourts: courtCount || 0,
-        totalBookings: bookingCount || 0,
-        totalRevenue: totalRevenue,
-        averagePerBooking: bookingCount ? (totalRevenue / bookingCount).toFixed(2) : 0,
-        chartData,
+        totalRevenue: 0,
+        totalBookings: 0,
+        totalCourts: 0,
+        totalClubs: 0,
+        monthlyRevenue: [],
+        bookingStatus: []
       })
-
       setLoading(false)
+      return
     } catch (err) {
       console.error('[v0] Error fetching dashboard stats:', err)
       setError('Failed to load dashboard data')

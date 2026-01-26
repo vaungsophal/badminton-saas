@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/auth'
+
 import { Bell, X } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 
@@ -20,30 +20,9 @@ export function RealtimeNotifications() {
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    // Subscribe to booking changes
-    const subscription = supabase
-      .channel('bookings')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'bookings' },
-        (payload: any) => {
-          const newNotification: Notification = {
-            id: `${Date.now()}`,
-            type: 'booking',
-            title: 'New Booking',
-            message: `A new booking was created`,
-            timestamp: new Date(),
-            read: false,
-          }
-          setNotifications((prev) => [newNotification, ...prev])
-          setUnreadCount((prev) => prev + 1)
-        }
-      )
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
-    }
+    // TODO: Implement real-time notifications with WebSocket or polling
+    // Temporarily disabled
+    return () => {}
   }, [])
 
   const markAsRead = (id: string) => {

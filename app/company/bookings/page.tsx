@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
-import { supabase } from '@/lib/auth'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertCircle, Check, X, Calendar, User, DollarSign } from 'lucide-react'

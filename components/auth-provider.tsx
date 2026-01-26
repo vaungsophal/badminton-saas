@@ -3,8 +3,6 @@
 import React from "react"
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/auth'
 import type { UserRole } from '@/lib/auth'
 
 interface User {
@@ -15,7 +13,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null
-  session: Session | null
+  token: string | null
   loading: boolean
   signOut: () => Promise<void>
 }
@@ -24,76 +22,62 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
+  const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
 
-    async function getSession() {
-      const { data: { session } } = await supabase.auth.getSession()
+    async function getUser() {
+      const storedToken = localStorage.getItem('auth_token')
       
-      if (mounted) {
-        setSession(session)
-        
-        if (session?.user?.id) {
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single()
-
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            role: (profile?.role as UserRole) || 'customer',
+      if (storedToken && mounted) {
+        setToken(storedToken)
+        try {
+          const response = await fetch('/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${storedToken}`
+            }
           })
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (mounted) {
+              setUser(data.user)
+            }
+          } else {
+            // Token invalid, remove it
+            localStorage.removeItem('auth_token')
+            setToken(null)
+          }
+        } catch (error) {
+          console.error('Error fetching current user:', error)
+          localStorage.removeItem('auth_token')
+          setToken(null)
         }
-        
-        setLoading(false)
       }
+
+      setLoading(false)
     }
 
-    getSession()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session)
-        
-        if (session?.user?.id) {
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single()
-
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            role: (profile?.role as UserRole) || 'customer',
-          })
-        } else {
-          setUser(null)
-        }
-        
-        setLoading(false)
-      }
-    )
-
-    return () => {
-      mounted = false
-      subscription?.unsubscribe()
-    }
+    getUser()
   }, [])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    setSession(null)
+    try {
+      localStorage.removeItem('auth_token')
+    } catch (error) {
+      console.error('Error during sign out:', error)
+    } finally {
+      setUser(null)
+      setToken(null)
+      // Force reload to clear all states and redirect
+      window.location.href = '/auth'
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut: handleSignOut }}>
+    <AuthContext.Provider value={{ user, token, loading, signOut: handleSignOut }}>
       {children}
     </AuthContext.Provider>
   )

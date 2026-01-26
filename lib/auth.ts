@@ -1,13 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import { db } from './server-db'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// This file is server-only
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
 export type UserRole = 'admin' | 'club_owner' | 'customer'
 
@@ -17,21 +14,25 @@ export interface AuthUser {
   role: UserRole
 }
 
-export async function getCurrentUser(): Promise<AuthUser | null> {
-  const { data: { user } } = await supabase.auth.getUser()
+export async function getCurrentUser(token?: string): Promise<AuthUser | null> {
+  if (!token) return null
 
-  if (!user?.email) return null
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string }
+    const user = await db.get(
+      'SELECT id, email, role FROM user_profiles WHERE id = $1',
+      [decoded.userId]
+    )
 
-  const { data: userProfile } = await supabase
-    .from('user_profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+    if (!user) return null
 
-  return {
-    id: user.id,
-    email: user.email,
-    role: (userProfile?.role as UserRole) || 'customer',
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role as UserRole,
+    }
+  } catch (error) {
+    return null
   }
 }
 
@@ -39,31 +40,66 @@ export async function signUp(
   email: string,
   password: string,
   role: UserRole = 'customer',
-  companyName?: string
+  companyName?: string,
+  fullName?: string
 ) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  })
+  const existingUser = await db.get(
+    'SELECT id FROM user_profiles WHERE email = $1',
+    [email]
+  )
 
-  if (error) throw error
-
-  if (data.user) {
-    await supabase.from('user_profiles').insert({
-      id: data.user.id,
-      email,
-      role,
-      company_name: companyName,
-    })
+  if (existingUser) {
+    throw new Error('User already exists')
   }
 
-  return data
+  const hashedPassword = await bcrypt.hash(password, 10)
+  const userId = crypto.randomUUID()
+
+  await db.query(
+    `INSERT INTO user_profiles (id, email, password_hash, role, company_name, full_name, created_at, updated_at) 
+     VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+    [userId, email, hashedPassword, role, companyName, fullName]
+  )
+
+  const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' })
+
+  return {
+    user: { id: userId, email, role },
+    token,
+  }
 }
 
 export async function signIn(email: string, password: string) {
-  return supabase.auth.signInWithPassword({ email, password })
+  const user = await db.get(
+    'SELECT id, email, password_hash, role FROM user_profiles WHERE email = $1',
+    [email]
+  )
+
+  if (!user) {
+    throw new Error('Invalid credentials')
+  }
+
+  const isValidPassword = await bcrypt.compare(password, user.password_hash)
+  if (!isValidPassword) {
+    throw new Error('Invalid credentials')
+  }
+
+  const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' })
+
+  return {
+    user: { id: user.id, email: user.email, role: user.role },
+    token,
+  }
 }
 
 export async function signOut() {
-  return supabase.auth.signOut()
+  return { success: true }
+}
+
+export async function verifyToken(token: string) {
+  try {
+    return jwt.verify(token, JWT_SECRET)
+  } catch (error) {
+    return null
+  }
 }

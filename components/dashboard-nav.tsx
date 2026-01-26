@@ -14,7 +14,6 @@ export function DashboardNav() {
 
   const handleSignOut = async () => {
     await signOut()
-    router.push('/auth')
   }
 
   const [menuOpen, setMenuOpen] = useState(false)
