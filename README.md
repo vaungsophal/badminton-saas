@@ -33,7 +33,6 @@ The platform connects **players**, **badminton club owners**, and **administrato
 - **Frontend:** Next.js, React, Tailwind CSS
 - **Backend:** Node.js, NestJS
 - **Database:** PostgreSQL
-- **ORM:** Prisma / Mongoose
 - **Maps:** Google Maps API
 - **Payments:** ABA Payway
 - **Storage:** Cloudinary / AWS S3
