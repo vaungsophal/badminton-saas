@@ -22,6 +22,17 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Validate user role
+    const validRoles = ['admin', 'club_owner', 'customer']
+    if (!validRoles.includes(user.role)) {
+      console.error('Invalid user role:', user.role)
+      return NextResponse.json(
+        { error: 'Invalid user role' },
+        { status: 401 }
+      )
+    }
+
+    console.log('API /auth/me - user verified with role:', user.role)
     return NextResponse.json({ user })
   } catch (error) {
     console.error('Get current user error:', error)

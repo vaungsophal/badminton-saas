@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
-import { supabase } from '@/lib/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, Edit2, Trash2, AlertCircle, Clock, DollarSign } from 'lucide-react'
@@ -18,16 +17,14 @@ export default function CourtsPage() {
     fetchCourts()
   }, [user])
 
-  async function fetchCourts() {
+async function fetchCourts() {
     try {
       if (!user?.id) return
 
-      const { data, error: fetchError } = await supabase
-        .from('courts')
-        .select('*')
-        .eq('owner_id', user.id)
+      const response = await fetch(`/api/courts?owner_id=${user.id}`)
+      const data = await response.json()
 
-      if (fetchError) throw fetchError
+      if (!response.ok) throw new Error(data.error || 'Failed to fetch courts')
 
       setCourts(data || [])
       setLoading(false)
@@ -38,17 +35,16 @@ export default function CourtsPage() {
     }
   }
 
-  async function deleteCourt(courtId: string) {
+async function deleteCourt(courtId: string) {
     if (!confirm('Are you sure you want to delete this court?')) return
 
     try {
-      const { error } = await supabase
-        .from('courts')
-        .delete()
-        .eq('id', courtId)
-        .eq('owner_id', user?.id)
+      const response = await fetch(`/api/courts?id=${courtId}&owner_id=${user?.id}`, {
+        method: 'DELETE'
+      })
+      const data = await response.json()
 
-      if (error) throw error
+      if (!response.ok) throw new Error(data.error || 'Failed to delete court')
 
       setCourts(courts.filter(c => c.id !== courtId))
     } catch (err) {
@@ -57,16 +53,23 @@ export default function CourtsPage() {
     }
   }
 
-  async function toggleStatus(courtId: string, currentStatus: string) {
+async function toggleStatus(courtId: string, currentStatus: string) {
     try {
       const newStatus = currentStatus === 'open' ? 'maintenance' : 'open'
-      const { error } = await supabase
-        .from('courts')
-        .update({ status: newStatus })
-        .eq('id', courtId)
-        .eq('owner_id', user?.id)
+      const response = await fetch('/api/courts', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: courtId,
+          owner_id: user?.id,
+          status: newStatus
+        })
+      })
+      const data = await response.json()
 
-      if (error) throw error
+      if (!response.ok) throw new Error(data.error || 'Failed to update court status')
 
       setCourts(courts.map(c => c.id === courtId ? { ...c, status: newStatus } : c))
     } catch (err) {

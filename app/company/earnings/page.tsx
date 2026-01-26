@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
-import { supabase } from '@/lib/auth'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertCircle, Download, BarChart3, TrendingUp, Calendar } from 'lucide-react'
@@ -32,30 +32,26 @@ export default function EarningsPage() {
     fetchEarnings()
   }, [user, dateRange])
 
-  async function fetchEarnings() {
+async function fetchEarnings() {
     try {
       if (!user?.id) return
 
-      let query = supabase
-        .from('bookings')
-        .select('total_price, booking_date, status')
-        .eq('owner_id', user.id)
-        .eq('status', 'confirmed')
-
+      let url = `/api/bookings?owner_id=${user.id}&status=confirmed`
+      
       // Filter by date range
       if (dateRange === 'month') {
         const now = new Date()
         const monthAgo = new Date(now.getFullYear(), now.getMonth(), 1)
-        query = query.gte('booking_date', monthAgo.toISOString())
+        url += `&start_date=${monthAgo.toISOString()}`
       } else if (dateRange === 'year') {
         const now = new Date()
         const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
-        query = query.gte('booking_date', yearAgo.toISOString())
+        url += `&start_date=${yearAgo.toISOString()}`
       }
 
-      const { data: bookings, error: fetchError } = await query
-
-      if (fetchError) throw fetchError
+      const response = await fetch(url)
+      if (!response.ok) throw new Error('Failed to fetch bookings')
+      const bookings = await response.json()
 
       // Calculate earnings
       const totalEarnings = bookings?.reduce((sum: number, b: any) => sum + (b.total_price || 0), 0) || 0
@@ -94,19 +90,16 @@ export default function EarningsPage() {
     }
   }
 
-  async function exportReport() {
+async function exportReport() {
     try {
-      const { data: bookings } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('owner_id', user?.id)
-        .eq('status', 'confirmed')
+      const response = await fetch(`/api/bookings?owner_id=${user?.id}&status=confirmed`)
+      const bookings = response.ok ? await response.json() : []
 
       if (!bookings) return
 
       // Create CSV content
       const headers = ['Date', 'Court', 'Customer', 'Time', 'Amount']
-      const rows = bookings.map(b => [
+      const rows = bookings.map((b: any) => [
         new Date(b.booking_date).toLocaleDateString(),
         b.court_name,
         b.customer_email,

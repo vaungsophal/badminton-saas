@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from './auth-provider'
-import { RealtimeNotifications } from './realtime-notifications'
+
 import { Button } from '@/components/ui/button'
 import { LogOut, LayoutDashboard, Settings } from 'lucide-react'
 
@@ -55,8 +55,7 @@ export function DashboardNav() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-4">
-              <RealtimeNotifications />
+<div className="hidden sm:flex items-center gap-4">
               <Link href="/dashboard/settings" className="text-gray-600 hover:text-gray-900">
                 <Settings className="w-5 h-5" />
               </Link>
@@ -109,12 +108,11 @@ export function DashboardNav() {
             ))}
           </div>
           <div className="pt-4 border-t border-gray-100">
-            <div className="flex items-center px-3 mb-4">
+<div className="flex items-center px-3 mb-4">
               <div className="flex-1">
                 <p className="text-base font-medium text-gray-800">{user.email}</p>
                 <p className="text-sm font-medium text-gray-500 capitalize">{user.role.replace('_', ' ')}</p>
               </div>
-              <RealtimeNotifications />
             </div>
             <button
               onClick={handleSignOut}

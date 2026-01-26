@@ -4,7 +4,7 @@ import React from "react"
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
-import { supabase } from '@/lib/auth'
+
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -29,14 +29,12 @@ export default function NewCourtPage() {
     fetchClubs()
   }, [user])
 
-  async function fetchClubs() {
+async function fetchClubs() {
     try {
       if (!user?.id) return
 
-      const { data } = await supabase
-        .from('clubs')
-        .select('*')
-        .eq('owner_id', user.id)
+      const response = await fetch('/api/clubs?owner_id=' + user.id)
+      const data = await response.json()
 
       if (data && data.length > 0) {
         setClubs(data)
@@ -61,20 +59,25 @@ export default function NewCourtPage() {
         throw new Error('Please fill in all required fields')
       }
 
-      const { error: insertError } = await supabase
-        .from('courts')
-        .insert([
-          {
-            owner_id: user.id,
-            club_id: formData.club_id,
-            court_name: formData.court_name,
-            price_per_hour: parseFloat(formData.price_per_hour),
-            available_time_slots: formData.available_time_slots || '8',
-            status: formData.status,
-          },
-        ])
+const response = await fetch('/api/courts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          owner_id: user.id,
+          club_id: formData.club_id,
+          court_name: formData.court_name,
+          price_per_hour: parseFloat(formData.price_per_hour),
+          available_time_slots: formData.available_time_slots || '8',
+          status: formData.status,
+        }),
+      })
 
-      if (insertError) throw insertError
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to create court')
+      }
 
       router.push('/company/courts')
     } catch (err) {

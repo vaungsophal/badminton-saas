@@ -40,7 +40,6 @@
     "@react-email/render": "latest",
     "@stripe/react-stripe-js": "5.4.1",
     "@stripe/stripe-js": "8.6.4",
-    "@supabase/supabase-js": "2.91.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/pg": "^8.16.0",

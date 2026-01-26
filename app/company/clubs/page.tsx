@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
-import { supabase } from '@/lib/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, MapPin, Edit2, Trash2, AlertCircle } from 'lucide-react'
@@ -18,16 +17,14 @@ export default function ClubsPage() {
     fetchClubs()
   }, [user])
 
-  async function fetchClubs() {
+async function fetchClubs() {
     try {
       if (!user?.id) return
 
-      const { data, error: fetchError } = await supabase
-        .from('clubs')
-        .select('*')
-        .eq('owner_id', user.id)
+      const response = await fetch(`/api/clubs?owner_id=${user.id}`)
+      const data = await response.json()
 
-      if (fetchError) throw fetchError
+      if (!response.ok) throw new Error(data.error || 'Failed to fetch clubs')
 
       setClubs(data || [])
       setLoading(false)
@@ -38,17 +35,16 @@ export default function ClubsPage() {
     }
   }
 
-  async function deleteClub(clubId: string) {
+async function deleteClub(clubId: string) {
     if (!confirm('Are you sure you want to delete this club?')) return
 
     try {
-      const { error } = await supabase
-        .from('clubs')
-        .delete()
-        .eq('id', clubId)
-        .eq('owner_id', user?.id)
+      const response = await fetch(`/api/clubs?id=${clubId}&owner_id=${user?.id}`, {
+        method: 'DELETE'
+      })
+      const data = await response.json()
 
-      if (error) throw error
+      if (!response.ok) throw new Error(data.error || 'Failed to delete club')
 
       setClubs(clubs.filter(c => c.id !== clubId))
     } catch (err) {

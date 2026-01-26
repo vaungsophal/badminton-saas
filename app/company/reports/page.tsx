@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
-import { supabase } from '@/lib/auth'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertCircle, Download, Calendar, Users, TrendingUp } from 'lucide-react'
@@ -17,47 +17,40 @@ export default function ReportsPage() {
     fetchReportData()
   }, [user])
 
-  async function fetchReportData() {
+async function fetchReportData() {
     try {
       if (!user?.id) return
 
-      // Fetch all bookings
-      const { data: bookings } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('owner_id', user.id)
+      // Fetch all data via API
+      const [bookingsRes, courtsRes, clubsRes] = await Promise.all([
+        fetch(`/api/bookings?owner_id=${user.id}`),
+        fetch(`/api/courts?owner_id=${user.id}`),
+        fetch(`/api/clubs?owner_id=${user.id}`)
+      ])
 
-      // Fetch all courts
-      const { data: courts } = await supabase
-        .from('courts')
-        .select('*')
-        .eq('owner_id', user.id)
+      const bookings = bookingsRes.ok ? await bookingsRes.json() : []
+      const courts = courtsRes.ok ? await courtsRes.json() : []
+      const clubs = clubsRes.ok ? await clubsRes.json() : []
 
-      // Fetch all clubs
-      const { data: clubs } = await supabase
-        .from('clubs')
-        .select('*')
-        .eq('owner_id', user.id)
-
-      // Calculate stats
+// Calculate stats
       const totalRevenue = bookings?.reduce((sum: number, b: any) => {
         return b.status === 'confirmed' ? sum + (b.total_price || 0) : sum
       }, 0) || 0
 
-      const confirmedBookings = bookings?.filter(b => b.status === 'confirmed').length || 0
-      const pendingBookings = bookings?.filter(b => b.status === 'pending').length || 0
-      const cancelledBookings = bookings?.filter(b => b.status === 'cancelled').length || 0
+      const confirmedBookings = bookings?.filter((b: any) => b.status === 'confirmed').length || 0
+      const pendingBookings = bookings?.filter((b: any) => b.status === 'pending').length || 0
+      const cancelledBookings = bookings?.filter((b: any) => b.status === 'cancelled').length || 0
 
       // Popular courts
       const courtStats: any = {}
-      bookings?.forEach(b => {
+      bookings?.forEach((b: any) => {
         if (b.status === 'confirmed') {
           courtStats[b.court_name] = (courtStats[b.court_name] || 0) + 1
         }
       })
 
-      const popularCourts = Object.entries(courtStats)
-        .sort(([, a]: any, [, b]: any) => b - a)
+const popularCourts = Object.entries(courtStats)
+        .sort(([, a]: any, [, b]: any) => (b as number) - (a as number))
         .slice(0, 5)
         .map(([name, count]) => ({ name, count }))
 
@@ -85,12 +78,10 @@ export default function ReportsPage() {
     alert('PDF export will be available soon.')
   }
 
-  async function exportCSV() {
+async function exportCSV() {
     try {
-      const { data: bookings } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('owner_id', user?.id)
+      const response = await fetch(`/api/bookings?owner_id=${user?.id}`)
+      const bookings = response.ok ? await response.json() : []
 
       if (!bookings) return
 
@@ -104,7 +95,7 @@ export default function ReportsPage() {
         'Amount',
         'Status',
       ]
-      const rows = bookings.map(b => [
+      const rows = bookings.map((b: any) => [
         new Date(b.booking_date).toLocaleDateString(),
         b.court_name,
         b.customer_email,

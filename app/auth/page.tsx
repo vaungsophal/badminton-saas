@@ -20,7 +20,7 @@ export default function AuthPage() {
   const [error, setError] = useState('')
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
@@ -48,15 +48,16 @@ export default function AuthPage() {
 
         const result = await response.json()
 
-        if (result.token) {
+        if (result.token && result.user) {
           localStorage.setItem('auth_token', result.token)
+          console.log('User signed up successfully:', result.user.role)
+          // Use the returned user role for accurate redirection
+          redirectByRole(result.user.role as UserRole)
+        } else {
+          throw new Error('Sign up failed - no token received')
         }
-
-        // Immediately redirect after sign up assuming success/auto-login
-        // Role is known because user just selected it
-        redirectByRole(role)
       } else {
-        // Sign in logic
+        // Sign in logic - fetch user from database and verify role
         const response = await fetch('/api/auth/signin', {
           method: 'POST',
           headers: {
@@ -72,29 +73,40 @@ export default function AuthPage() {
 
         const result = await response.json()
 
-        if (result.token) {
+        if (result.token && result.user) {
           localStorage.setItem('auth_token', result.token)
-          
-          if (result.user) {
-            const userRole = result.user.role || 'customer'
-            redirectByRole(userRole as UserRole)
-          }
+          console.log('User signed in successfully:', result.user.role)
+          // Use the verified user role from database for accurate redirection
+          redirectByRole(result.user.role as UserRole)
+        } else {
+          throw new Error('Sign in failed - no token received')
         }
       }
     } catch (err) {
+      console.error('Authentication error:', err)
       setError(err instanceof Error ? err.message : 'Authentication failed')
     } finally {
       setLoading(false)
     }
   }
 
-  const redirectByRole = (userRole: UserRole) => {
-    if (userRole === 'admin') {
-      router.push('/admin')
-    } else if (userRole === 'club_owner') {
-      router.push('/company')
-    } else {
-      router.push('/dashboard')
+const redirectByRole = (userRole: UserRole) => {
+    console.log('Redirecting user with role:', userRole)
+    
+    switch (userRole) {
+      case 'admin':
+        console.log('Redirecting to admin dashboard')
+        router.push('/admin')
+        break
+      case 'club_owner':
+        console.log('Redirecting to company dashboard')
+        router.push('/company')
+        break
+      case 'customer':
+      default:
+        console.log('Redirecting to customer dashboard')
+        router.push('/dashboard')
+        break
     }
   }
 

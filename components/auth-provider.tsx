@@ -42,10 +42,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           if (response.ok) {
             const data = await response.json()
-            if (mounted) {
+            if (mounted && data.user) {
+              console.log('Auth provider - user loaded:', data.user.role)
               setUser(data.user)
             }
           } else {
+            console.log('Auth provider - token invalid, removing')
             // Token invalid, remove it
             localStorage.removeItem('auth_token')
             setToken(null)

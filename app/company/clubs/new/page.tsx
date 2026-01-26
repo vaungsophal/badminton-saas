@@ -4,7 +4,6 @@ import React from "react"
 
 import { useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
-import { supabase } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -40,22 +39,25 @@ export default function NewClubPage() {
         throw new Error('Please fill in all required fields')
       }
 
-      const { error: insertError } = await supabase
-        .from('clubs')
-        .insert([
-          {
-            owner_id: user.id,
-            name: formData.name,
-            description: formData.description,
-            location: formData.location,
-            latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-            longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-            phone: formData.phone,
-            email: formData.email,
-          },
-        ])
+const response = await fetch('/api/clubs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          owner_id: user.id,
+          name: formData.name,
+          description: formData.description,
+          location: formData.location,
+          latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+          longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+          phone: formData.phone,
+          email: formData.email,
+        })
+      })
+      const data = await response.json()
 
-      if (insertError) throw insertError
+      if (!response.ok) throw new Error(data.error || 'Failed to create club')
 
       router.push('/company/clubs')
     } catch (err) {

@@ -8,18 +8,25 @@ export default function Home() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  useEffect(() => {
+useEffect(() => {
     if (!loading) {
       if (user) {
+        console.log('Main page - redirecting user with role:', user.role)
         // Redirect based on user role
-        if (user.role === 'admin') {
-          router.push('/admin')
-        } else if (user.role === 'club_owner') {
-          router.push('/company')
-        } else {
-          router.push('/dashboard')
+        switch (user.role) {
+          case 'admin':
+            router.push('/admin')
+            break
+          case 'club_owner':
+            router.push('/company')
+            break
+          case 'customer':
+          default:
+            router.push('/dashboard')
+            break
         }
       } else {
+        console.log('Main page - no user found, redirecting to auth')
         router.push('/auth')
       }
     }

@@ -30,17 +30,14 @@ export default function BookingsPage() {
     fetchBookings()
   }, [user])
 
-  async function fetchBookings() {
+async function fetchBookings() {
     try {
       if (!user?.id) return
 
-      const { data, error: fetchError } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('owner_id', user.id)
-        .order('booking_date', { ascending: false })
+      const response = await fetch(`/api/bookings?owner_id=${user.id}`)
+      const data = await response.json()
 
-      if (fetchError) throw fetchError
+      if (!response.ok) throw new Error(data.error || 'Failed to fetch bookings')
 
       setBookings(data || [])
       setLoading(false)
@@ -51,15 +48,22 @@ export default function BookingsPage() {
     }
   }
 
-  async function updateBookingStatus(bookingId: string, status: string) {
+async function updateBookingStatus(bookingId: string, status: string) {
     try {
-      const { error: updateError } = await supabase
-        .from('bookings')
-        .update({ status })
-        .eq('id', bookingId)
-        .eq('owner_id', user?.id)
+      const response = await fetch('/api/bookings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: bookingId,
+          owner_id: user?.id,
+          status
+        })
+      })
+      const data = await response.json()
 
-      if (updateError) throw updateError
+      if (!response.ok) throw new Error(data.error || 'Failed to update booking')
 
       setBookings(bookings.map(b => b.id === bookingId ? { ...b, status } : b))
     } catch (err) {
