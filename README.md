@@ -17,7 +17,7 @@ The platform connects **players**, **badminton club owners**, and **administrato
 - Create and manage badminton clubs
 - Add, edit, and delete badminton courts
 - Set pricing per hour and available time slots
-- Upload court and club images
+- Upload club and court images
 - Manage bookings (approve, cancel, view schedule)
 - Track earnings and booking history
 - Owner dashboard with statistics
