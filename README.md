@@ -1,7 +1,7 @@
 # 🏸 Badminton SaaS – Court Booking Platform
 
 Badminton SaaS is a **full-stack SaaS web application** designed to simplify badminton court booking and management.  
-The platform connects **players**, **court owners**, and **administrators** in one scalable system.
+The platform connects **players**, **badminton club owners**, and **administrators** in one scalable system.
 
 ## 🚀 Key Features
 
