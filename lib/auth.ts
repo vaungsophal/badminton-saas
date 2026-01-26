@@ -24,14 +24,26 @@ export async function getCurrentUser(token?: string): Promise<AuthUser | null> {
       [decoded.userId]
     )
 
-    if (!user) return null
+    if (!user) {
+      console.log('User not found for ID:', decoded.userId)
+      return null
+    }
 
+    // Validate role
+    const validRoles = ['admin', 'club_owner', 'customer']
+    if (!validRoles.includes(user.role)) {
+      console.error('Invalid user role:', user.role)
+      return null
+    }
+
+    console.log('Current user retrieved:', { id: user.id, email: user.email, role: user.role })
     return {
       id: user.id,
       email: user.email,
       role: user.role as UserRole,
     }
   } catch (error) {
+    console.error('Error getting current user:', error)
     return null
   }
 }
@@ -43,12 +55,20 @@ export async function signUp(
   companyName?: string,
   fullName?: string
 ) {
+  // Validate role
+  const validRoles = ['admin', 'club_owner', 'customer']
+  if (!validRoles.includes(role)) {
+    console.error('Invalid role during signup:', role)
+    throw new Error('Invalid user role')
+  }
+
   const existingUser = await db.get(
     'SELECT id FROM user_profiles WHERE email = $1',
     [email]
   )
 
   if (existingUser) {
+    console.log('User already exists:', email)
     throw new Error('User already exists')
   }
 
@@ -63,6 +83,7 @@ export async function signUp(
 
   const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' })
 
+  console.log('User signed up successfully:', { id: userId, email, role })
   return {
     user: { id: userId, email, role },
     token,
@@ -76,18 +97,28 @@ export async function signIn(email: string, password: string) {
   )
 
   if (!user) {
+    console.log('User not found for email:', email)
     throw new Error('Invalid credentials')
   }
 
   const isValidPassword = await bcrypt.compare(password, user.password_hash)
   if (!isValidPassword) {
+    console.log('Invalid password for email:', email)
     throw new Error('Invalid credentials')
+  }
+
+  // Validate role
+  const validRoles = ['admin', 'club_owner', 'customer']
+  if (!validRoles.includes(user.role)) {
+    console.error('Invalid user role during signin:', user.role)
+    throw new Error('Invalid user role')
   }
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' })
 
+  console.log('User signed in successfully:', { id: user.id, email: user.email, role: user.role })
   return {
-    user: { id: user.id, email: user.email, role: user.role },
+    user: { id: user.id, email: user.email, role: user.role as UserRole },
     token,
   }
 }

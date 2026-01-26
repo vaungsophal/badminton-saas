@@ -1,7 +1,7 @@
 # 🏸 Badminton SaaS – Court Booking Platform
 
 Badminton SaaS is a **full-stack SaaS web application** designed to simplify badminton court booking and management.  
-The platform connects **players**, **court owners**, and **administrators** in one scalable system.
+The platform connects **players**, **badminton club owners**, and **administrators** in one scalable system.
 
 ## 🚀 Key Features
 
@@ -10,14 +10,14 @@ The platform connects **players**, **court owners**, and **administrators** in o
 - Browse badminton clubs and courts
 - Search courts by location, price, and availability
 - Book courts by selecting date and time slot
-- Online payments (Stripe / PayPal)
+- Online payments (ABA Payway)
 - View and manage bookings
 
-### 🏟 Court Owner
+### 🏟 Club/Court Owner
 - Create and manage badminton clubs
 - Add, edit, and delete badminton courts
 - Set pricing per hour and available time slots
-- Upload court and club images
+- Upload club and court images
 - Manage bookings (approve, cancel, view schedule)
 - Track earnings and booking history
 - Owner dashboard with statistics
@@ -31,11 +31,10 @@ The platform connects **players**, **court owners**, and **administrators** in o
 
 ## ⚙️ Tech Stack
 - **Frontend:** Next.js, React, Tailwind CSS
-- **Backend:** Node.js, Express / NestJS
-- **Database:** PostgreSQL / MongoDB
-- **ORM:** Prisma / Mongoose
+- **Backend:** Node.js, NestJS
+- **Database:** PostgreSQL
 - **Maps:** Google Maps API
-- **Payments:** Stripe
+- **Payments:** ABA Payway
 - **Storage:** Cloudinary / AWS S3
 
 ## 🔐 Core Capabilities
