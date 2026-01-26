@@ -21,12 +21,12 @@ async function fetchClubs() {
     try {
       if (!user?.id) return
 
-      const response = await fetch(`/api/clubs?owner_id=${user.id}`)
+const response = await fetch(`/api/clubs?owner_id=${user.id}`)
       const data = await response.json()
-
+ 
       if (!response.ok) throw new Error(data.error || 'Failed to fetch clubs')
-
-      setClubs(data || [])
+ 
+      setClubs(data.clubs || [])
       setLoading(false)
     } catch (err) {
       console.error('[v0] Error fetching clubs:', err)
@@ -99,19 +99,23 @@ async function deleteClub(clubId: string) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {clubs.map((club) => (
             <Card key={club.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              {club.image_url && (
+              {club.images && club.images.length > 0 ? (
                 <img
-                  src={club.image_url || "/placeholder.svg"}
+                  src={club.images[0] || "/placeholder.jpg"}
                   alt={club.name}
                   className="w-full h-48 object-cover"
                 />
+              ) : (
+                <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-400">No Image</span>
+                </div>
               )}
               <CardHeader>
                 <CardTitle className="text-lg">{club.name}</CardTitle>
-                <CardDescription className="flex gap-1 mt-2">
-                  <MapPin className="w-4 h-4 flex-shrink-0" />
-                  {club.location}
-                </CardDescription>
+                  <CardDescription className="flex gap-1 mt-2">
+                   <MapPin className="w-4 h-4 flex-shrink-0" />
+                   {club.address}
+                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 mb-4 line-clamp-2">{club.description}</p>

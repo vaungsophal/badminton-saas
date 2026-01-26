@@ -3,6 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Loader2, MapPin } from 'lucide-react'
 
+// TypeScript declaration for Google Maps
+declare global {
+  interface Window {
+    google: any
+  }
+}
+
 interface CourtLocation {
   id: string
   name: string
@@ -25,14 +32,19 @@ export function CourtMap({ courts, selectedCourtId }: CourtMapProps) {
     // Load Google Maps script
     if (!window.google) {
       const script = document.createElement('script')
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
       script.async = true
+      script.defer = true
       script.onload = initMap
+      script.onerror = () => {
+        console.error('Failed to load Google Maps script')
+        setLoading(false)
+      }
       document.head.appendChild(script)
     } else {
       initMap()
     }
-  }, [])
+  }, [courts])
 
   const initMap = () => {
     if (!mapContainer.current || !window.google) return

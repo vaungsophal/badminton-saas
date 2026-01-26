@@ -1,19 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import {
-  EmbeddedCheckout,
-  EmbeddedCheckoutProvider,
-} from '@stripe/react-stripe-js'
-import { loadStripe } from '@stripe/stripe-js'
-import { createCheckoutSession } from '@/app/actions/payment'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/components/auth-provider'
+import { ABAPayment } from '@/components/aba-payment'
 import { Card } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
-
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-)
 
 interface PaymentCheckoutProps {
   bookingId: string
@@ -30,32 +21,19 @@ export function PaymentCheckout({
   date,
   time,
 }: PaymentCheckoutProps) {
-  const router = useRouter()
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
-  const [clientSecret, setClientSecret] = useState<string | null>(null)
-
-  const startCheckout = useCallback(async () => {
-    try {
-      setLoading(true)
-      const response = await createCheckoutSession(
-        bookingId,
-        amount,
-        courtName,
-        date,
-        time
-      )
-      setClientSecret(response.clientSecret)
-    } catch (error) {
-      console.error('Checkout error:', error)
-      setLoading(false)
-    }
-  }, [bookingId, amount, courtName, date, time])
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    startCheckout()
-  }, [startCheckout])
+    // Simulate loading payment info
+    const timer = setTimeout(() => {
+      setLoading(false)
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [])
 
-  if (loading || !clientSecret) {
+  if (loading) {
     return (
       <Card className="p-8">
         <div className="flex flex-col items-center justify-center gap-4">
@@ -66,9 +44,29 @@ export function PaymentCheckout({
     )
   }
 
+  if (error) {
+    return (
+      <Card className="p-8">
+        <div className="text-center">
+          <p className="text-red-600">{error}</p>
+        </div>
+      </Card>
+    )
+  }
+
   return (
-    <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
-      <EmbeddedCheckout />
-    </EmbeddedCheckoutProvider>
+    <ABAPayment
+      bookingId={bookingId}
+      amount={amount}
+      courtName={courtName}
+      date={date}
+      time={time}
+      customerInfo={{
+        firstname: user?.full_name?.split(' ')[0] || '',
+        lastname: user?.full_name?.split(' ')[1] || '',
+        email: user?.email || '',
+        phone: user?.phone || ''
+      }}
+    />
   )
 }

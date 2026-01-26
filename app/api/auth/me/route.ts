@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/auth'
+import jwt from 'jsonwebtoken'
+import { db } from '@/lib/database'
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +14,16 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const user = await getCurrentUser(token)
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
+
+    if (!decoded.id) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      )
+    }
+
+    const user = await db.findById('user_profiles', decoded.id)
 
     if (!user) {
       return NextResponse.json(

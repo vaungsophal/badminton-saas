@@ -23,10 +23,10 @@ async function fetchCourts() {
 
       const response = await fetch(`/api/courts?owner_id=${user.id}`)
       const data = await response.json()
-
+ 
       if (!response.ok) throw new Error(data.error || 'Failed to fetch courts')
-
-      setCourts(data || [])
+ 
+      setCourts(data.courts || [])
       setLoading(false)
     } catch (err) {
       console.error('[v0] Error fetching courts:', err)
@@ -124,17 +124,21 @@ async function toggleStatus(courtId: string, currentStatus: string) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courts.map((court) => (
             <Card key={court.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              {court.image_url && (
+              {court.images && court.images.length > 0 ? (
                 <img
-                  src={court.image_url || "/placeholder.svg"}
-                  alt={court.court_name}
+                  src={court.images[0] || "/placeholder.jpg"}
+                  alt={court.name}
                   className="w-full h-48 object-cover"
                 />
+              ) : (
+                <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-400">No Image</span>
+                </div>
               )}
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-lg">{court.court_name}</CardTitle>
+                    <CardTitle className="text-lg">{court.name}</CardTitle>
                     <CardDescription className="mt-1">{court.club_name}</CardDescription>
                   </div>
                   <span
