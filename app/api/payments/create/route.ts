@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/database'
+import { db } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,17 +13,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Create payment record
-    const payment = await db.insert('payments', {
+    const payment = await db.query(`
+      INSERT INTO payments (booking_id, amount, status, payment_method, transaction_id, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+      RETURNING *
+    `, [
       booking_id,
       amount,
-      status,
+      status || 'pending',
       payment_method,
-      stripe_payment_intent_id: tran_id, // Using this field for ABA transaction ID
-      created_at: new Date(),
-      updated_at: new Date()
-    })
+      tran_id
+    ])
 
-    return NextResponse.json({ success: true, payment })
+    return NextResponse.json({ success: true, payment: payment.rows[0] })
   } catch (error) {
     console.error('Payment API error:', error)
     return NextResponse.json(

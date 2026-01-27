@@ -4,47 +4,75 @@ import React from "react"
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
-
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, AlertCircle, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { ImageUpload } from '@/components/image-upload'
 
-export default function NewCourtPage() {
+export default function EditCourtPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [fetchLoading, setFetchLoading] = useState(true)
   const [error, setError] = useState('')
+  const [court, setCourt] = useState<any>(null)
   const [clubs, setClubs] = useState<any[]>([])
-const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     club_id: '',
     court_name: '',
     price_per_hour: '',
-    available_time_slots: '',
     status: 'open',
     images: [] as string[],
   })
-  const [selectedClub, setSelectedClub] = useState<any>(null)
 
   useEffect(() => {
-    fetchClubs()
-  }, [user])
+    fetchData()
+  }, [params.id])
 
-async function fetchClubs() {
+  async function fetchData() {
     try {
-      if (!user?.id) return
+      if (!user?.id || !params.id) return
 
-      const response = await fetch('/api/clubs?owner_id=' + user.id)
-      const data = await response.json()
+      // Fetch court details
+      const courtResponse = await fetch(`/api/courts?id=${params.id}`)
+      const courtData = await courtResponse.json()
 
-      if (data.clubs && data.clubs.length > 0) {
-        setClubs(data.clubs)
-        setFormData({ ...formData, club_id: data.clubs[0].id })
+      if (!courtResponse.ok) {
+        if (courtResponse.status === 404) {
+          throw new Error('Court not found')
+        }
+        throw new Error(courtData.error || 'Failed to fetch court')
       }
+
+      setCourt(courtData)
+
+      // Fetch clubs for dropdown
+      const clubsResponse = await fetch(`/api/clubs?owner_id=${user.id}`)
+      const clubsData = await clubsResponse.json()
+
+      if (!clubsResponse.ok) {
+        throw new Error(clubsData.error || 'Failed to fetch clubs')
+      }
+
+      const userClubs = clubsData.clubs || []
+      setClubs(userClubs)
+
+      // Set form data
+      setFormData({
+        club_id: courtData.club_id || (userClubs.length > 0 ? userClubs[0].id : ''),
+        court_name: courtData.name || '',
+        price_per_hour: courtData.price_per_hour?.toString() || '',
+        status: courtData.status || 'open',
+        images: courtData.images || [],
+      })
+
+      setFetchLoading(false)
     } catch (err) {
-      console.error('[v0] Error fetching clubs:', err)
+      console.error('[v0] Error fetching court data:', err)
+      setError((err as any).message || 'Failed to load court data')
+      setFetchLoading(false)
     }
   }
 
@@ -62,36 +90,45 @@ async function fetchClubs() {
         throw new Error('Please fill in all required fields')
       }
 
-const response = await fetch('/api/courts', {
-        method: 'POST',
+      const response = await fetch(`/api/courts?id=${params.id}&owner_id=${user.id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          owner_id: user.id,
           club_id: formData.club_id,
           court_name: formData.court_name,
           price_per_hour: parseFloat(formData.price_per_hour),
-          available_time_slots: formData.available_time_slots || '8',
           status: formData.status,
+          images: formData.images,
         }),
       })
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to create court')
-      }
+      const data = await response.json()
+
+      if (!response.ok) throw new Error(data.error || 'Failed to update court')
 
       router.push('/company/courts')
     } catch (err) {
-      console.error('[v0] Error creating court:', err)
-      setError((err as any).message || 'Failed to create court')
+      console.error('[v0] Error updating court:', err)
+      setError((err as any).message || 'Failed to update court')
     } finally {
       setLoading(false)
     }
   }
 
-  if (clubs.length === 0) {
+  if (fetchLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading court...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error && !court) {
     return (
       <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-2xl mx-auto">
         <Link href="/company/courts" className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6">
@@ -101,9 +138,9 @@ const response = await fetch('/api/courts', {
 
         <Card>
           <CardContent className="pt-8 text-center">
-            <p className="text-gray-600 mb-4">Please create a club first before adding courts.</p>
-            <Link href="/company/clubs/new">
-              <Button className="bg-blue-600 hover:bg-blue-700">Create Club</Button>
+            <p className="text-red-600">{error}</p>
+            <Link href="/company/courts" className="mt-4 inline-block">
+              <Button className="bg-blue-600 hover:bg-blue-700">Back to Courts</Button>
             </Link>
           </CardContent>
         </Card>
@@ -120,8 +157,8 @@ const response = await fetch('/api/courts', {
 
       <Card>
         <CardHeader>
-          <CardTitle>Create New Court</CardTitle>
-          <CardDescription>Add a new badminton court to your club</CardDescription>
+          <CardTitle>Edit Court</CardTitle>
+          <CardDescription>Update court information for {court?.name}</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -175,30 +212,18 @@ const response = await fetch('/api/courts', {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Available Time Slots</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={formData.available_time_slots}
-                  onChange={(e) => setFormData({ ...formData, available_time_slots: e.target.value })}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., 8"
-                />
+                >
+                  <option value="open">Open</option>
+                  <option value="closed">Closed</option>
+                  <option value="maintenance">Maintenance</option>
+                </select>
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="open">Open</option>
-                <option value="closed">Closed</option>
-                <option value="maintenance">Maintenance</option>
-              </select>
-</div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Court Images</label>
@@ -217,7 +242,7 @@ const response = await fetch('/api/courts', {
                 </Button>
               </Link>
               <Button type="submit" disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-700">
-                {loading ? 'Creating...' : 'Create Court'}
+                {loading ? 'Updating...' : 'Update Court'}
               </Button>
             </div>
           </form>

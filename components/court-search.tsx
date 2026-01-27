@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Search, Filter, MapPin, Clock, DollarSign, X } from 'lucide-react'
+import { Search, Filter, MapPin, Clock, DollarSign, X, Star } from 'lucide-react'
 
 interface SearchFilters {
   query: string
@@ -132,34 +132,28 @@ export function CourtSearch() {
   ].filter(Boolean).length + filters.amenities.length
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Search Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="w-5 h-5" />
-            Find Badminton Courts
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <Card className="border-0 shadow-sm">
+        <CardContent className="p-4 space-y-4">
           {/* Main Search Bar */}
           <div className="flex gap-2">
             <Input
               placeholder="Search courts, clubs, or locations..."
               value={filters.query}
               onChange={(e) => handleFilterChange('query', e.target.value)}
-              className="flex-1"
+              className="flex-1 text-sm"
             />
-            <Button onClick={searchCourts} disabled={loading}>
-              {loading ? 'Searching...' : 'Search'}
+            <Button onClick={searchCourts} disabled={loading} size="sm" className="px-4">
+              <Search className="w-4 h-4" />
             </Button>
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
-              className="relative"
+              className="relative px-3"
+              size="sm"
             >
-              <Filter className="w-4 h-4 mr-2" />
-              Filters
+              <Filter className="w-4 h-4" />
               {activeFilterCount > 0 && (
                 <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
                   {activeFilterCount}
@@ -171,12 +165,12 @@ export function CourtSearch() {
           {/* Quick Filters */}
           <div className="flex flex-wrap gap-2">
             <Select value={filters.location} onValueChange={(value) => handleFilterChange('location', value)}>
-              <SelectTrigger className="w-48">
-                <MapPin className="w-4 h-4 mr-2" />
+              <SelectTrigger className="w-full sm:w-40 text-sm">
+                <MapPin className="w-3 h-3 mr-2" />
                 <SelectValue placeholder="Location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Locations</SelectItem>
+                <SelectItem value="all">All Locations</SelectItem>
                 <SelectItem value="phnom-penh">Phnom Penh</SelectItem>
                 <SelectItem value="siem-reap">Siem Reap</SelectItem>
                 <SelectItem value="sihanoukville">Sihanoukville</SelectItem>
@@ -187,7 +181,7 @@ export function CourtSearch() {
               type="date"
               value={filters.date}
               onChange={(e) => handleFilterChange('date', e.target.value)}
-              className="w-40"
+              className="w-full sm:w-32 text-sm"
             />
 
             <Input
@@ -195,7 +189,7 @@ export function CourtSearch() {
               value={filters.startTime}
               onChange={(e) => handleFilterChange('startTime', e.target.value)}
               placeholder="Start time"
-              className="w-32"
+              className="w-full sm:w-28 text-sm"
             />
 
             <Input
@@ -203,7 +197,7 @@ export function CourtSearch() {
               value={filters.endTime}
               onChange={(e) => handleFilterChange('endTime', e.target.value)}
               placeholder="End time"
-              className="w-32"
+              className="w-full sm:w-28 text-sm"
             />
           </div>
         </CardContent>
@@ -211,22 +205,21 @@ export function CourtSearch() {
 
       {/* Advanced Filters */}
       {showFilters && (
-        <Card>
-          <CardHeader>
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-4 space-y-6">
             <div className="flex items-center justify-between">
-              <CardTitle>Advanced Filters</CardTitle>
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                <X className="w-4 h-4 mr-2" />
+              <h3 className="font-semibold text-gray-900">Advanced Filters</h3>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
+                <X className="w-3 h-3 mr-1" />
                 Clear All
               </Button>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+
             {/* Price Range */}
             <div>
-              <Label className="flex items-center gap-2 mb-2">
+              <Label className="flex items-center gap-2 mb-3 text-sm font-medium">
                 <DollarSign className="w-4 h-4" />
-                Price per Hour: ${filters.minPrice} - ${filters.maxPrice}
+                Price: ${filters.minPrice} - ${filters.maxPrice}
               </Label>
               <div className="px-2">
                 <Slider
@@ -242,28 +235,11 @@ export function CourtSearch() {
               </div>
             </div>
 
-            {/* Distance Range */}
-            <div>
-              <Label className="flex items-center gap-2 mb-2">
-                <MapPin className="w-4 h-4" />
-                Max Distance: {filters.maxDistance} km
-              </Label>
-              <div className="px-2">
-                <Slider
-                  value={[filters.maxDistance]}
-                  onValueChange={([max]) => handleFilterChange('maxDistance', max)}
-                  max={100}
-                  step={5}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
             {/* Rating */}
             <div>
-              <Label className="block mb-2">Minimum Rating</Label>
+              <Label className="block mb-2 text-sm font-medium">Minimum Rating</Label>
               <Select value={filters.rating.toString()} onValueChange={(value) => handleFilterChange('rating', parseInt(value))}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -277,16 +253,16 @@ export function CourtSearch() {
 
             {/* Amenities */}
             <div>
-              <Label className="block mb-2">Amenities</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {amenityOptions.map((amenity) => (
+              <Label className="block mb-3 text-sm font-medium">Amenities</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {amenityOptions.slice(0, 6).map((amenity) => (
                   <div key={amenity} className="flex items-center space-x-2">
                     <Checkbox
                       id={amenity}
                       checked={filters.amenities.includes(amenity)}
                       onCheckedChange={(checked) => handleAmenityChange(amenity, checked as boolean)}
                     />
-                    <Label htmlFor={amenity} className="text-sm">
+                    <Label htmlFor={amenity} className="text-xs">
                       {amenity}
                     </Label>
                   </div>
@@ -298,11 +274,11 @@ export function CourtSearch() {
       )}
 
       {/* Search Results */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {courts.map((court) => (
-          <Card key={court.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+          <Card key={court.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 shadow-sm">
             <div className="aspect-video bg-gray-200 relative">
-              {court.images.length > 0 ? (
+              {court.images?.length > 0 ? (
                 <img
                   src={court.images[0]}
                   alt={court.name}
@@ -310,42 +286,51 @@ export function CourtSearch() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  No Image
+                  <MapPin className="w-8 h-8" />
                 </div>
               )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              
               {court.distance && (
-                <Badge className="absolute top-2 left-2">
+                <Badge className="absolute top-2 left-2 bg-white/90 text-gray-800 text-xs">
                   {court.distance.toFixed(1)} km
                 </Badge>
               )}
+
+              {court.rating && (
+                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold text-blue-600 shadow-sm flex items-center gap-1">
+                  <Star className="w-3 h-3 fill-current" />
+                  {typeof court.rating === 'number' ? court.rating.toFixed(1) : court.rating}
+                </div>
+              )}
             </div>
+            
             <CardContent className="p-4">
               <div className="space-y-2">
-                <h3 className="font-semibold text-lg">{court.name}</h3>
-                <p className="text-sm text-gray-600">{court.club_name}</p>
-                <p className="text-sm text-gray-500 flex items-center gap-1">
+                <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-1">{court.name}</h3>
+                {court.club_name && (
+                  <p className="text-xs text-gray-500 font-medium">{court.club_name}</p>
+                )}
+                <p className="text-xs text-gray-500 flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
-                  {court.address}
+                  <span className="line-clamp-1">{court.address}</span>
                 </p>
                 
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-blue-600">
-                    ${court.price_per_hour}/hr
+                <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+                  <span className="text-lg font-bold text-blue-600">
+                    ${court.price_per_hour}
+                    <span className="text-xs text-gray-400 font-normal">/hr</span>
                   </span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-yellow-500">★</span>
-                    <span className="text-sm">{court.rating.toFixed(1)}</span>
-                  </div>
+
+                  {court.available_slots !== undefined && (
+                    <div className="flex items-center gap-1 text-xs text-green-600">
+                      <Clock className="w-3 h-3" />
+                      {court.available_slots} slots
+                    </div>
+                  )}
                 </div>
 
-                {court.available_slots !== undefined && (
-                  <div className="flex items-center gap-1 text-sm text-green-600">
-                    <Clock className="w-3 h-3" />
-                    {court.available_slots} slots available
-                  </div>
-                )}
-
-                <Button className="w-full mt-3">
+                <Button className="w-full mt-3 text-xs font-bold" size="sm">
                   View Details
                 </Button>
               </div>
@@ -355,11 +340,14 @@ export function CourtSearch() {
       </div>
 
       {courts.length === 0 && !loading && (
-        <Card>
+        <Card className="border-0 shadow-sm">
           <CardContent className="text-center py-12">
             <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No courts found</h3>
-            <p className="text-gray-600">Try adjusting your search filters</p>
+            <p className="text-gray-600 text-sm">Try adjusting your search filters</p>
+            <Button onClick={clearFilters} variant="outline" className="mt-4">
+              Clear Filters
+            </Button>
           </CardContent>
         </Card>
       )}

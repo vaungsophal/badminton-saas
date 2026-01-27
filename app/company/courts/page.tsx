@@ -56,14 +56,12 @@ async function deleteCourt(courtId: string) {
 async function toggleStatus(courtId: string, currentStatus: string) {
     try {
       const newStatus = currentStatus === 'open' ? 'maintenance' : 'open'
-      const response = await fetch('/api/courts', {
+      const response = await fetch(`/api/courts?id=${courtId}&owner_id=${user?.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          id: courtId,
-          owner_id: user?.id,
           status: newStatus
         })
       })
@@ -122,13 +120,17 @@ async function toggleStatus(courtId: string, currentStatus: string) {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courts.map((court) => (
+{courts.map((court) => (
             <Card key={court.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               {court.images && court.images.length > 0 ? (
                 <img
                   src={court.images[0] || "/placeholder.jpg"}
                   alt={court.name}
                   className="w-full h-48 object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.src = "/placeholder.jpg"
+                  }}
                 />
               ) : (
                 <div className="w-full h-48 bg-gray-200 flex items-center justify-center">

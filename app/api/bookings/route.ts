@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/server-db'
+import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,22 +8,35 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const startDate = searchParams.get('start_date')
 
-    let query = 'SELECT * FROM bookings'
+    let query = `
+      SELECT 
+        b.*,
+        c.name as court_name,
+        c.club_id,
+        cl.name as club_name,
+        cl.owner_id,
+        up.email as customer_email,
+        up.full_name as customer_name
+      FROM bookings b
+      LEFT JOIN courts c ON b.court_id = c.id
+      LEFT JOIN clubs cl ON c.club_id = cl.id
+      LEFT JOIN user_profiles up ON b.customer_id = up.id
+    `
     const params = []
     const conditions = []
 
     if (ownerId) {
-      conditions.push('owner_id = $' + (params.length + 1))
+      conditions.push('cl.owner_id = $' + (params.length + 1))
       params.push(ownerId)
     }
 
     if (status) {
-      conditions.push('status = $' + (params.length + 1))
+      conditions.push('b.status = $' + (params.length + 1))
       params.push(status)
     }
 
     if (startDate) {
-      conditions.push('booking_date >= $' + (params.length + 1))
+      conditions.push('b.booking_date >= $' + (params.length + 1))
       params.push(startDate)
     }
 
@@ -31,7 +44,10 @@ export async function GET(request: NextRequest) {
       query += ' WHERE ' + conditions.join(' AND ')
     }
 
-    const bookings = await db.all(query, params)
+    query += ' ORDER BY b.booking_date DESC, b.start_time DESC'
+
+    const result = await db.query(query, params)
+    const bookings = result.rows
     return NextResponse.json(bookings)
   } catch (error) {
     console.error('Error fetching bookings:', error)

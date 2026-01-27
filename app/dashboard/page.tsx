@@ -4,7 +4,8 @@ import { useAuth } from '@/components/auth-provider'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { MapPin, Users, Clock } from 'lucide-react'
+import { MapPin, Users, Clock, Star, TrendingUp, Heart } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -25,32 +26,39 @@ function CustomerDashboard() {
   const { user } = useAuth()
   const router = useRouter()
 
-  const featuredCourts = [
-    {
-      id: '1',
-      name: 'Downtown Badminton Club',
-      location: 'City Center',
-      courts: 4,
-      pricePerHour: 25,
-      rating: 4.8,
-    },
-    {
-      id: '2',
-      name: 'Sports Arena',
-      location: 'North District',
-      courts: 6,
-      pricePerHour: 30,
-      rating: 4.6,
-    },
-    {
-      id: '3',
-      name: 'Community Sports Hall',
-      location: 'South Park',
-      courts: 3,
-      pricePerHour: 20,
-      rating: 4.5,
-    },
-  ]
+  const [featuredCourts, setFeaturedCourts] = useState<any[]>([])
+  const [userStats, setUserStats] = useState({ upcoming: 0, players: 0, favorites: 0 })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchFeaturedCourts()
+    fetchUserStats()
+  }, [])
+
+  const fetchFeaturedCourts = async () => {
+    try {
+      const response = await fetch('/api/courts/search?limit=6')
+      const data = await response.json()
+      setFeaturedCourts(data.courts?.slice(0, 6) || [])
+    } catch (error) {
+      console.error('Error fetching courts:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchUserStats = async () => {
+    try {
+      // Mock stats for now - replace with real API calls
+      setUserStats({
+        upcoming: 3,
+        players: 12,
+        favorites: 5
+      })
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -99,57 +107,124 @@ function CustomerDashboard() {
         </Card>
       </div>
 
-      <div>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Featured Courts</h2>
+      {/* Featured Courts */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-900">Featured Courts</h2>
           <Button
             onClick={() => router.push('/dashboard/browse')}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 text-sm px-4 py-2"
           >
-            View All Courts
+            View All
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {featuredCourts.map((court) => (
-            <Card key={court.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 group border-gray-100">
-              <div className="h-40 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-sm font-bold text-blue-600 shadow-sm">
-                  ⭐ {court.rating}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="overflow-hidden animate-pulse">
+                <div className="h-32 bg-gray-200"></div>
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
                 </div>
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{court.name}</h3>
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <div className="bg-gray-100 p-1.5 rounded-full">
-                      <MapPin className="w-3.5 h-3.5" />
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredCourts.map((court) => (
+              <Card key={court.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 group border-0 shadow-sm hover:shadow-xl hover:-translate-y-1">
+                {/* Court Image */}
+                <div className="h-32 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
+                  {court.images?.length > 0 ? (
+                    <img
+                      src={court.images[0]}
+                      alt={court.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-white/80">
+                      <MapPin className="w-8 h-8" />
                     </div>
-                    <span className="text-sm font-medium">{court.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <div className="bg-gray-100 p-1.5 rounded-full">
-                      <Users className="w-3.5 h-3.5" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  
+                  {/* Rating Badge */}
+                  {court.rating && (
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold text-blue-600 shadow-sm flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-current" />
+                      {typeof court.rating === 'number' ? court.rating.toFixed(1) : court.rating}
                     </div>
-                    <span className="text-sm font-medium">{court.courts} courts available</span>
+                  )}
+                </div>
+
+                {/* Court Info */}
+                <div className="p-4">
+                  <div className="space-y-3">
+                    <h3 className="font-bold text-gray-900 text-sm leading-tight group-hover:text-blue-600 transition-colors line-clamp-1">
+                      {court.name}
+                    </h3>
+                    
+                    {court.club_name && (
+                      <p className="text-xs text-gray-500 font-medium">{court.club_name}</p>
+                    )}
+
+                    {court.address && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <MapPin className="w-3 h-3 text-gray-400" />
+                        <span className="text-xs line-clamp-1">{court.address}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+                      <div>
+                        <p className="text-lg font-black text-blue-600">${court.price_per_hour}</p>
+                        <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider">per hour</p>
+                      </div>
+                      <Button
+                        onClick={() => router.push(`/dashboard/book/${court.id}`)}
+                        className="bg-blue-600 hover:bg-blue-700 text-xs px-4 py-2 font-bold shadow-lg shadow-blue-200/50"
+                      >
+                        Book Now
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex justify-between items-center pt-4 border-t border-gray-50">
-                  <div>
-                    <p className="text-2xl font-black text-blue-600">${court.pricePerHour}</p>
-                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">per hour</p>
-                  </div>
-                  <Button
-                    onClick={() => router.push(`/dashboard/book/${court.id}`)}
-                    className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 px-6 font-bold"
-                  >
-                    Book Now
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Quick Actions - Mobile */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 sm:hidden z-40">
+        <div className="grid grid-cols-3 gap-2">
+          <Button
+            onClick={() => router.push('/dashboard/browse')}
+            className="flex flex-col gap-1 h-auto py-2 text-xs"
+            variant="outline"
+          >
+            <MapPin className="w-4 h-4" />
+            Browse
+          </Button>
+          <Button
+            onClick={() => router.push('/dashboard/my-bookings')}
+            className="flex flex-col gap-1 h-auto py-2 text-xs"
+            variant="outline"
+          >
+            <Clock className="w-4 h-4" />
+            My Bookings
+          </Button>
+          <Button
+            onClick={() => router.push('/dashboard/settings')}
+            className="flex flex-col gap-1 h-auto py-2 text-xs"
+            variant="outline"
+          >
+            <Users className="w-4 h-4" />
+            Profile
+          </Button>
         </div>
       </div>
     </div>

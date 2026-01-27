@@ -68,10 +68,10 @@ export function ABAPayment({
       }
 
       // Create payment and get redirect URL
-      const { paymentUrl, tranId: transactionId } = abaPayway.createPaymentRequest(paymentRequest)
+      const { paymentUrl: abaPaymentUrl, tranId: transactionId } = abaPayway.createPaymentRequest(paymentRequest)
 
-      // Save transaction info to database
-      await fetch('/api/payments/create', {
+      // Create payment via server action
+      const { success, paymentUrl: serverPaymentUrl } = await fetch('/api/payments/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -81,10 +81,14 @@ export function ABAPayment({
           payment_method: 'aba_payway',
           status: 'pending'
         })
-      })
+      }).then(res => res.json())
+
+      if (!success) {
+        throw new Error('Failed to create payment record')
+      }
 
       // Redirect to ABA Payway
-      window.location.href = paymentUrl
+      window.location.href = abaPaymentUrl
 
     } catch (err) {
       console.error('Payment error:', err)

@@ -3,13 +3,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { Loader2, MapPin, Crosshair } from 'lucide-react'
 
+// Global variable to track if Google Maps script is loading
+let isGoogleMapsLoading = false
+
 interface LocationPickerProps {
   onLocationSelect: (lat: number, lng: number, address: string) => void
   initialLat?: number
   initialLng?: number
 }
 
-export function LocationPicker({ onLocationSelect, initialLat = 40.7128, initialLng = -74.006 }: LocationPickerProps) {
+export function LocationPicker({ onLocationSelect, initialLat = 11.5564, initialLng = 104.9282 }: LocationPickerProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<any>(null)
   const marker = useRef<any>(null)
@@ -20,14 +23,23 @@ export function LocationPicker({ onLocationSelect, initialLat = 40.7128, initial
 
   useEffect(() => {
     // Load Google Maps script
-    if (!window.google) {
+    if (!window.google && !isGoogleMapsLoading) {
+      isGoogleMapsLoading = true
       const script = document.createElement('script')
       script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
       script.async = true
       script.defer = true
-      script.onload = initMap
+      script.onload = () => {
+        isGoogleMapsLoading = false
+        initMap()
+      }
+      script.onerror = () => {
+        isGoogleMapsLoading = false
+        console.error('Failed to load Google Maps')
+        setLoading(false)
+      }
       document.head.appendChild(script)
-    } else {
+    } else if (window.google) {
       initMap()
     }
   }, [])

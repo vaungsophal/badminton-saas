@@ -111,8 +111,8 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     total_price DECIMAL(10,2) NOT NULL,
     commission_amount DECIMAL(10,2) NOT NULL, -- Platform's cut at time of booking
     status booking_status DEFAULT 'pending',
-    payment_method TEXT DEFAULT 'stripe',
-    stripe_session_id TEXT,
+    payment_method TEXT DEFAULT 'aba_payway',
+    transaction_id TEXT,
     cancellation_reason TEXT,
     player_count INTEGER NOT NULL DEFAULT 1 CHECK (player_count > 0 AND player_count <= 4),
     notes TEXT,
@@ -132,8 +132,8 @@ CREATE TABLE IF NOT EXISTS public.payments (
     amount DECIMAL(10,2) NOT NULL,
     status payment_status NOT NULL DEFAULT 'pending',
     payment_method TEXT,
-    stripe_payment_intent_id TEXT,
-    stripe_session_id TEXT,
+    transaction_id TEXT,
+    gateway_response JSONB DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );

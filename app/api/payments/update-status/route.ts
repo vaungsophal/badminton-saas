@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/database'
+import { db } from '@/lib/db'
+import { abaPayway } from '@/lib/aba-payway'
 
 export async function POST(request: NextRequest) {
   try {
-    const { transaction_id, status, payment_reference } = await request.json()
+    const { transaction_id, status, payment_reference, ...responseParams } = await request.json()
 
     if (!transaction_id || !status) {
       return NextResponse.json(
@@ -12,32 +13,51 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update payment record
-    const paymentData = await db.update(
-      'payments', 
-      'stripe_payment_intent_id', 
-      transaction_id,
-      {
-        status,
-        updated_at: new Date(),
-        metadata: payment_reference ? { payment_reference } : {}
+    // Verify payment response if it's from ABA Payway
+    if (responseParams.hash) {
+      const isValid = abaPayway.verifyPaymentResponse(responseParams)
+      if (!isValid) {
+        return NextResponse.json(
+          { error: 'Invalid payment signature' },
+          { status: 400 }
+        )
       }
-    )
+    }
 
-    // If payment is successful, update booking status
-    if (status === 'completed' && paymentData?.booking_id) {
-      await db.update(
-        'bookings',
-        'id',
-        paymentData.booking_id,
-        {
-          status: 'confirmed',
-          updated_at: new Date()
-        }
+    // Update payment record
+    const paymentResult = await db.query(`
+      UPDATE payments 
+      SET status = $1, updated_at = NOW(), gateway_response = $2
+      WHERE transaction_id = $3 
+      RETURNING *
+    `, [
+      status,
+      JSON.stringify(responseParams),
+      transaction_id
+    ])
+
+    if (paymentResult.rows.length === 0) {
+      return NextResponse.json(
+        { error: 'Payment record not found' },
+        { status: 404 }
       )
     }
 
-    return NextResponse.json({ success: true, payment: paymentData })
+    const payment = paymentResult.rows[0]
+
+    // If payment is successful, update booking status
+    if (status === 'completed' && payment.booking_id) {
+      await db.query(`
+        UPDATE bookings 
+        SET status = $1, updated_at = NOW()
+        WHERE id = $2
+      `, [
+        'confirmed',
+        payment.booking_id
+      ])
+    }
+
+    return NextResponse.json({ success: true, payment })
   } catch (error) {
     console.error('Payment update API error:', error)
     return NextResponse.json(
