@@ -1,5 +1,5 @@
 -- PostgreSQL Database Schema for Badminton Booking System
--- Migration script to create all necessary tables
+-- This script can be run directly in PostgreSQL query tool
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -174,7 +174,8 @@ CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role);
 
 CREATE INDEX IF NOT EXISTS idx_clubs_owner_id ON clubs(owner_id);
 CREATE INDEX IF NOT EXISTS idx_clubs_is_active ON clubs(is_active);
-CREATE INDEX IF NOT EXISTS idx_clubs_name ON clubs USING gin (name gin_trgm_ops); -- Requires pg_trgm extension
+-- CREATE INDEX IF NOT EXISTS idx_clubs_name ON clubs USING gin (name gin_trgm_ops); -- Requires pg_trgm extension
+-- Uncomment the line above after installing pg_trgm extension if needed for text search
 
 CREATE INDEX IF NOT EXISTS idx_courts_club_id ON courts(club_id);
 CREATE INDEX IF NOT EXISTS idx_courts_status ON courts(status);
@@ -238,8 +239,7 @@ INSERT INTO platform_settings (commission_rate, refund_threshold_hours, currency
 VALUES (10.00, 24, 'USD')
 ON CONFLICT (id) DO NOTHING;
 
--- Insert sample data (optional)
--- You can uncomment these to create sample data for testing
+-- Sample data (optional - uncomment to use)
 
 -- Sample admin user
 -- INSERT INTO user_profiles (email, password_hash, role, full_name) 

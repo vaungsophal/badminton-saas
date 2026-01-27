@@ -35,33 +35,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (storedToken && mounted) {
         setToken(storedToken)
-        try {
-          const response = await fetch('/api/auth/me', {
-            headers: {
-              'Authorization': `Bearer ${storedToken}`
+        
+        // Add retry mechanism for fetching user data
+        let retryCount = 0
+        const maxRetries = 3
+        
+        while (retryCount < maxRetries) {
+          try {
+            const response = await fetch('/api/auth/me', {
+              headers: {
+                'Authorization': `Bearer ${storedToken}`
+              }
+            })
+            
+            if (response.ok) {
+              const data = await response.json()
+              if (mounted && data.user) {
+                console.log('Auth provider - user loaded:', data.user.role)
+                setUser(data.user)
+                break // Success, exit retry loop
+              }
+            } else {
+              console.log('Auth provider - token invalid, removing')
+              localStorage.removeItem('auth_token')
+              setToken(null)
+              break
             }
-          })
-          
-          if (response.ok) {
-            const data = await response.json()
-            if (mounted && data.user) {
-              console.log('Auth provider - user loaded:', data.user.role)
-              setUser(data.user)
+          } catch (error) {
+            console.error(`Error fetching current user (attempt ${retryCount + 1}):`, error)
+            retryCount++
+            
+            if (retryCount < maxRetries) {
+              // Wait a bit before retrying
+              await new Promise(resolve => setTimeout(resolve, 500))
+            } else {
+              localStorage.removeItem('auth_token')
+              setToken(null)
             }
-          } else {
-            console.log('Auth provider - token invalid, removing')
-            // Token invalid, remove it
-            localStorage.removeItem('auth_token')
-            setToken(null)
           }
-        } catch (error) {
-          console.error('Error fetching current user:', error)
-          localStorage.removeItem('auth_token')
-          setToken(null)
         }
       }
 
-      setLoading(false)
+      if (mounted) {
+        setLoading(false)
+      }
     }
 
     getUser()

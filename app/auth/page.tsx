@@ -52,10 +52,13 @@ if (result.token && result.user) {
           localStorage.setItem('auth_token', result.token)
           console.log('User signed up successfully:', result.user.role)
           
-          // Trigger a page reload to ensure auth context picks up the new token
-          // This is more reliable than relying on the auth context to update immediately
-          window.location.href = result.user.role === 'admin' ? '/admin' : 
-                               result.user.role === 'club_owner' ? '/company' : '/dashboard'
+          // Force a hard navigation to the appropriate dashboard
+          // This ensures the auth context will have the token available on next load
+          const targetUrl = result.user.role === 'admin' ? '/admin' : 
+                          result.user.role === 'club_owner' ? '/company' : '/dashboard'
+          
+          // Use window.location.replace to prevent back navigation
+          window.location.replace(targetUrl)
         } else {
           throw new Error('Sign up failed - no token received')
         }
@@ -80,10 +83,13 @@ if (result.token && result.user) {
           localStorage.setItem('auth_token', result.token)
           console.log('User signed in successfully:', result.user.role)
           
-          // Trigger a page reload to ensure auth context picks up the new token
-          // This is more reliable than relying on the auth context to update immediately
-          window.location.href = result.user.role === 'admin' ? '/admin' : 
-                               result.user.role === 'club_owner' ? '/company' : '/dashboard'
+          // Force a hard navigation to the appropriate dashboard
+          // This ensures the auth context will have the token available on next load
+          const targetUrl = result.user.role === 'admin' ? '/admin' : 
+                          result.user.role === 'club_owner' ? '/company' : '/dashboard'
+          
+          // Use window.location.replace to prevent back navigation
+          window.location.replace(targetUrl)
         } else {
           throw new Error('Sign in failed - no token received')
         }
