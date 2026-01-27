@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { owner_id, club_id, court_name, price_per_hour, available_time_slots, status, images } = body
+    const { owner_id, club_id, court_name, price_per_hour, operating_hours, slot_duration, status, images } = body
 
     // Validate that the club belongs to the owner
     const clubCheck = await db.query(
@@ -59,6 +59,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Club not found or unauthorized' }, { status: 404 })
     }
 
+    const descriptionData = operating_hours && slot_duration 
+      ? JSON.stringify({ operating_hours, slot_duration })
+      : null
+
     const result = await db.query(`
       INSERT INTO courts (club_id, name, description, images, price_per_hour, status, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
@@ -66,7 +70,7 @@ export async function POST(request: NextRequest) {
     `, [
       club_id,
       court_name,
-      null,
+      descriptionData,
       images || [],
       price_per_hour,
       status || 'open'

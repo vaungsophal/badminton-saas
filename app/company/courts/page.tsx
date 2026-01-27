@@ -12,6 +12,7 @@ export default function CourtsPage() {
   const [courts, setCourts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [clubs, setClubs] = useState<any[]>([])
 
   useEffect(() => {
     fetchCourts()

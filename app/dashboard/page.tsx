@@ -27,12 +27,10 @@ function CustomerDashboard() {
   const router = useRouter()
 
   const [featuredCourts, setFeaturedCourts] = useState<any[]>([])
-  const [userStats, setUserStats] = useState({ upcoming: 0, players: 0, favorites: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchFeaturedCourts()
-    fetchUserStats()
   }, [])
 
   const fetchFeaturedCourts = async () => {
@@ -47,66 +45,10 @@ function CustomerDashboard() {
     }
   }
 
-  const fetchUserStats = async () => {
-    try {
-      // Mock stats for now - replace with real API calls
-      setUserStats({
-        upcoming: 3,
-        players: 12,
-        favorites: 5
-      })
-    } catch (error) {
-      console.error('Error fetching stats:', error)
-    }
-  }
+  
 
-  return (
+return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Welcome back, {user?.email?.split('@')[0]}!
-        </h1>
-        <p className="text-gray-600">Book your favorite badminton courts</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 bg-blue-50 border-blue-200 hover:shadow-md transition-all duration-300 hover:-translate-y-1">
-          <div className="flex items-center gap-4">
-            <div className="bg-blue-600 rounded-lg p-3 shadow-blue-200 shadow-lg">
-              <Clock className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 font-medium tracking-wide uppercase">Upcoming</p>
-              <p className="text-3xl font-bold text-gray-900 leading-none mt-1">3</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-green-50 border-green-200 hover:shadow-md transition-all duration-300 hover:-translate-y-1">
-          <div className="flex items-center gap-4">
-            <div className="bg-green-600 rounded-lg p-3 shadow-green-200 shadow-lg">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 font-medium tracking-wide uppercase">Players</p>
-              <p className="text-3xl font-bold text-gray-900 leading-none mt-1">12</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-purple-50 border-purple-200 hover:shadow-md transition-all duration-300 hover:-translate-y-1">
-          <div className="flex items-center gap-4">
-            <div className="bg-purple-600 rounded-lg p-3 shadow-purple-200 shadow-lg">
-              <MapPin className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 font-medium tracking-wide uppercase">Favorite</p>
-              <p className="text-3xl font-bold text-gray-900 leading-none mt-1">5</p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
       {/* Featured Courts */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">

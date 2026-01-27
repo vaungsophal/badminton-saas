@@ -2,49 +2,129 @@
 
 import React from "react"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useAuth } from '@/components/auth-provider'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Clock, Users, MapPin, ChevronLeft } from 'lucide-react'
+import { Clock, Users, MapPin, ChevronLeft, AlertCircle } from 'lucide-react'
 
 export default function BookingPage() {
   const params = useParams()
   const router = useRouter()
+  const { user } = useAuth()
   const courtId = params.courtId as string
 
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [playerCount, setPlayerCount] = useState('2')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [court, setCourt] = useState<any>(null)
+  const [timeSlots, setTimeSlots] = useState<any[]>([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
 
-  const timeSlots = [
-    { id: '1', time: '06:00 - 07:00', available: true },
-    { id: '2', time: '07:00 - 08:00', available: true },
-    { id: '3', time: '08:00 - 09:00', available: false },
-    { id: '4', time: '17:00 - 18:00', available: true },
-    { id: '5', time: '18:00 - 19:00', available: true },
-    { id: '6', time: '19:00 - 20:00', available: true },
-  ]
+  useEffect(() => {
+    if (courtId) {
+      fetchCourtDetails()
+    }
+  }, [courtId])
 
-  const handleBooking = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (selectedDate && courtId) {
+      fetchTimeSlots()
+    }
+  }, [selectedDate, courtId])
+
+  async function fetchCourtDetails() {
+    try {
+      const response = await fetch(`/api/courts?id=${courtId}`)
+      if (!response.ok) {
+        throw new Error('Court not found')
+      }
+      const courtData = await response.json()
+      setCourt(courtData)
+    } catch (err) {
+      setError('Failed to load court details')
+      console.error('Error fetching court:', err)
+    }
+  }
+
+  async function fetchTimeSlots() {
+    if (!selectedDate || !courtId) return
+    
+    setLoadingSlots(true)
+    try {
+      const response = await fetch(`/api/time-slots?court_id=${courtId}&date=${selectedDate}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch time slots')
+      }
+      const data = await response.json()
+      setTimeSlots(data.timeSlots || [])
+    } catch (err) {
+      setError('Failed to load available time slots')
+      console.error('Error fetching time slots:', err)
+    } finally {
+      setLoadingSlots(false)
+    }
+  }
+
+const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedDate || !selectedSlot) {
-      alert('Please select a date and time slot')
+      setError('Please select a date and time slot')
+      return
+    }
+
+    if (!user?.id) {
+      setError('Please log in to make a booking')
       return
     }
 
     setLoading(true)
+    setError('')
+    
     try {
-      // API call would happen here
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      router.push('/dashboard/my-bookings?success=true')
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          time_slot_id: selectedSlot,
+          court_id: courtId,
+          customer_id: user.id,
+          player_count: parseInt(playerCount),
+          booking_date: selectedDate,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create booking')
+      }
+
+      const bookingData = await response.json()
+      
+      // Redirect to payment or success page
+      router.push(`/dashboard/my-bookings?success=true&booking_id=${bookingData.id}`)
     } catch (error) {
-      alert('Booking failed')
+      setError((error as any).message || 'Booking failed')
     } finally {
       setLoading(false)
     }
+  }
+
+if (!court) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading court details...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -57,19 +137,26 @@ export default function BookingPage() {
         Back
       </button>
 
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <p className="text-red-700">{error}</p>
+        </div>
+      )}
+
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Downtown Badminton Club
+          {court.name}
         </h1>
         <div className="flex items-center gap-4 text-gray-600">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4" />
-            <span>City Center</span>
+            <span>{court.club_name || 'Badminton Club'}</span>
           </div>
           <div className="text-gray-400">•</div>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
-            <span>$25/hour</span>
+            <span>${court.price_per_hour}/hour</span>
           </div>
         </div>
       </div>
@@ -88,34 +175,46 @@ export default function BookingPage() {
             />
           </Card>
 
-          {selectedDate && (
+{selectedDate && (
             <Card className="p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Available Time Slots</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {timeSlots.map((slot) => (
-                  <button
-                    key={slot.id}
-                    onClick={() => {
-                      if (slot.available) {
-                        setSelectedSlot(slot.id)
-                      }
-                    }}
-                    disabled={!slot.available}
-                    className={`p-3 rounded-lg border-2 transition-colors ${
-                      selectedSlot === slot.id
-                        ? 'border-blue-600 bg-blue-50'
-                        : slot.available
-                          ? 'border-gray-200 hover:border-blue-400'
-                          : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    <div className="font-medium text-sm">{slot.time}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {slot.available ? 'Available' : 'Booked'}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              {loadingSlots ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : timeSlots.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No time slots available for this date</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {timeSlots.map((slot) => (
+                    <button
+                      key={slot.id}
+                      onClick={() => {
+                        if (slot.is_available) {
+                          setSelectedSlot(slot.id)
+                        }
+                      }}
+                      disabled={!slot.is_available}
+                      className={`p-3 rounded-lg border-2 transition-colors ${
+                        selectedSlot === slot.id
+                          ? 'border-blue-600 bg-blue-50'
+                          : slot.is_available
+                            ? 'border-gray-200 hover:border-blue-400'
+                            : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      <div className="font-medium text-sm">
+                        {slot.start_time} - {slot.end_time}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {slot.is_available ? 'Available' : 'Booked'}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </Card>
           )}
 
@@ -160,10 +259,12 @@ export default function BookingPage() {
                 <span>Players:</span>
                 <span className="font-medium text-gray-900">{playerCount}</span>
               </div>
-              <div className="border-t pt-3 flex justify-between">
-                <span className="font-semibold text-gray-900">Total:</span>
-                <span className="text-2xl font-bold text-blue-600">$25</span>
-              </div>
+<div className="border-t pt-3 flex justify-between">
+                 <span className="font-semibold text-gray-900">Total:</span>
+                 <span className="text-2xl font-bold text-blue-600">
+                   ${court ? court.price_per_hour : '25'}
+                 </span>
+               </div>
             </div>
 
             <Button

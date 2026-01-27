@@ -8,9 +8,8 @@ import { useAuth } from '@/components/auth-provider'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, AlertCircle, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
-import { ImageUpload } from '@/components/image-upload'
 
 export default function NewCourtPage() {
   const { user } = useAuth()
@@ -22,9 +21,12 @@ const [formData, setFormData] = useState({
     club_id: '',
     court_name: '',
     price_per_hour: '',
-    available_time_slots: '',
+    operating_hours: {
+      start_time: '06:00',
+      end_time: '22:00'
+    },
+    slot_duration: 60,
     status: 'open',
-    images: [] as string[],
   })
   const [selectedClub, setSelectedClub] = useState<any>(null)
 
@@ -42,6 +44,7 @@ async function fetchClubs() {
       if (data.clubs && data.clubs.length > 0) {
         setClubs(data.clubs)
         setFormData({ ...formData, club_id: data.clubs[0].id })
+        setSelectedClub(data.clubs[0])
       }
     } catch (err) {
       console.error('[v0] Error fetching clubs:', err)
@@ -58,7 +61,7 @@ async function fetchClubs() {
         throw new Error('User not authenticated')
       }
 
-      if (!formData.club_id || !formData.court_name || !formData.price_per_hour) {
+if (!formData.club_id || !formData.court_name || !formData.price_per_hour) {
         throw new Error('Please fill in all required fields')
       }
 
@@ -72,8 +75,10 @@ const response = await fetch('/api/courts', {
           club_id: formData.club_id,
           court_name: formData.court_name,
           price_per_hour: parseFloat(formData.price_per_hour),
-          available_time_slots: formData.available_time_slots || '8',
+          operating_hours: formData.operating_hours,
+          slot_duration: formData.slot_duration,
           status: formData.status,
+          images: selectedClub?.images || []
         }),
       })
 
@@ -137,7 +142,12 @@ const response = await fetch('/api/courts', {
               <select
                 required
                 value={formData.club_id}
-                onChange={(e) => setFormData({ ...formData, club_id: e.target.value })}
+                onChange={(e) => {
+                  const clubId = e.target.value
+                  setFormData({ ...formData, club_id: clubId })
+                  const club = clubs.find(c => c.id === clubId)
+                  setSelectedClub(club)
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Choose a club</option>
@@ -148,6 +158,30 @@ const response = await fetch('/api/courts', {
                 ))}
               </select>
             </div>
+
+            {selectedClub && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Club Cover Image</label>
+                <div className="mt-1">
+                  {selectedClub.images && selectedClub.images.length > 0 ? (
+                    <img
+                      src={selectedClub.images[0]}
+                      alt={selectedClub.name}
+                      className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = "/placeholder.jpg"
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center rounded-lg border border-gray-200">
+                      <span className="text-gray-400">No club image available</span>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">This court will use the club's cover image</p>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Court Name/Number *</label>
@@ -161,30 +195,67 @@ const response = await fetch('/api/courts', {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price per Hour (USD) *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={formData.price_per_hour}
-                  onChange={(e) => setFormData({ ...formData, price_per_hour: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., 25.00"
-                />
+<div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Price per Hour (USD) *</label>
+              <input
+                type="number"
+                step="0.01"
+                required
+                value={formData.price_per_hour}
+                onChange={(e) => setFormData({ ...formData, price_per_hour: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., 25.00"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Operating Hours</label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Start Time</label>
+                  <input
+                    type="time"
+                    value={formData.operating_hours.start_time}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      operating_hours: { 
+                        ...formData.operating_hours, 
+                        start_time: e.target.value 
+                      } 
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">End Time</label>
+                  <input
+                    type="time"
+                    value={formData.operating_hours.end_time}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      operating_hours: { 
+                        ...formData.operating_hours, 
+                        end_time: e.target.value 
+                      } 
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Available Time Slots</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={formData.available_time_slots}
-                  onChange={(e) => setFormData({ ...formData, available_time_slots: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., 8"
-                />
-              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Slot Duration (minutes)</label>
+              <select
+                value={formData.slot_duration}
+                onChange={(e) => setFormData({ ...formData, slot_duration: parseInt(e.target.value) })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value={30}>30 minutes</option>
+                <option value={60}>60 minutes</option>
+                <option value={90}>90 minutes</option>
+                <option value={120}>120 minutes</option>
+              </select>
             </div>
 
             <div>
@@ -200,15 +271,7 @@ const response = await fetch('/api/courts', {
               </select>
 </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Court Images</label>
-              <ImageUpload
-                onImagesChange={(images) => setFormData({ ...formData, images })}
-                initialImages={formData.images}
-                maxImages={5}
-                folder="courts"
-              />
-            </div>
+
 
             <div className="flex gap-3 pt-4">
               <Link href="/company/courts" className="flex-1">

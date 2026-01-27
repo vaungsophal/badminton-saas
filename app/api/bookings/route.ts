@@ -55,6 +55,75 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { time_slot_id, court_id, customer_id, player_count, booking_date } = body
+
+    if (!time_slot_id || !court_id || !customer_id || !player_count || !booking_date) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Start a transaction
+    await db.query('BEGIN')
+
+    try {
+      // Check if the time slot is still available
+      const slotCheck = await db.query(
+        'SELECT * FROM time_slots WHERE id = $1 AND is_available = true FOR UPDATE',
+        [time_slot_id]
+      )
+
+      if (slotCheck.rows.length === 0) {
+        await db.query('ROLLBACK')
+        return NextResponse.json({ error: 'Time slot is no longer available' }, { status: 409 })
+      }
+
+      // Get court details for pricing
+      const courtResult = await db.query(
+        'SELECT price_per_hour FROM courts WHERE id = $1',
+        [court_id]
+      )
+
+      if (courtResult.rows.length === 0) {
+        await db.query('ROLLBACK')
+        return NextResponse.json({ error: 'Court not found' }, { status: 404 })
+      }
+
+      const court = courtResult.rows[0]
+      const totalPrice = court.price_per_hour
+
+      // Create the booking
+      const bookingResult = await db.query(
+        `INSERT INTO bookings (time_slot_id, court_id, customer_id, player_count, booking_date, total_price, status, created_at, updated_at) 
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW(), NOW()) 
+         RETURNING *`,
+        [time_slot_id, court_id, customer_id, player_count, booking_date, totalPrice]
+      )
+
+      const booking = bookingResult.rows[0]
+
+      // Mark the time slot as unavailable
+      await db.query(
+        'UPDATE time_slots SET is_available = false, updated_at = NOW() WHERE id = $1',
+        [time_slot_id]
+      )
+
+      // Commit the transaction
+      await db.query('COMMIT')
+
+      return NextResponse.json({ booking, status: 'pending' }, { status: 201 })
+    } catch (error) {
+      // Rollback on any error
+      await db.query('ROLLBACK')
+      throw error
+    }
+  } catch (error) {
+    console.error('Error creating booking:', error)
+    return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 })
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
