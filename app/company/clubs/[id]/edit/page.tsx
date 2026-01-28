@@ -12,13 +12,15 @@ import Link from 'next/link'
 import { LocationPicker } from '@/components/location-picker'
 import { ImageUpload } from '@/components/image-upload'
 
-export default function EditClubPage({ params }: { params: { id: string } }) {
+export default function EditClubPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
   const [error, setError] = useState('')
   const [club, setClub] = useState<any>(null)
+  const unwrappedParams = React.use(params)
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -32,13 +34,13 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     fetchClub()
-  }, [params.id])
+  }, [unwrappedParams.id])
 
-  async function fetchClub() {
+async function fetchClub() {
     try {
-      if (!user?.id || !params.id) return
+      if (!user?.id || !unwrappedParams.id) return
 
-      const response = await fetch(`/api/clubs?id=${params.id}&owner_id=${user.id}`)
+      const response = await fetch(`/api/clubs?id=${unwrappedParams.id}&owner_id=${user.id}`)
       const data = await response.json()
 
       if (!response.ok) {
@@ -72,7 +74,7 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
     setError('')
     setLoading(true)
 
-    try {
+try {
       if (!user?.id) {
         throw new Error('User not authenticated')
       }
@@ -81,7 +83,18 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
         throw new Error('Please fill in all required fields')
       }
 
-      const response = await fetch(`/api/clubs?id=${params.id}&owner_id=${user.id}`, {
+      console.log('Submitting club data:', {
+        name: formData.name,
+        description: formData.description,
+        address: formData.address,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        phone: formData.phone,
+        email: formData.email,
+        images: formData.images,
+      })
+
+      const response = await fetch(`/api/clubs?id=${unwrappedParams.id}&owner_id=${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -99,6 +112,7 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
       })
 
       const data = await response.json()
+      console.log('API response:', { status: response.status, data })
 
       if (!response.ok) throw new Error(data.error || 'Failed to update club')
 

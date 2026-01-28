@@ -11,7 +11,7 @@ import { ArrowLeft, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { ImageUpload } from '@/components/image-upload'
 
-export default function EditCourtPage({ params }: { params: { id: string } }) {
+export default function EditCourtPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -19,6 +19,8 @@ export default function EditCourtPage({ params }: { params: { id: string } }) {
   const [error, setError] = useState('')
   const [court, setCourt] = useState<any>(null)
   const [clubs, setClubs] = useState<any[]>([])
+  const unwrappedParams = React.use(params)
+  
   const [formData, setFormData] = useState({
     club_id: '',
     court_name: '',
@@ -29,14 +31,14 @@ export default function EditCourtPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     fetchData()
-  }, [params.id])
+  }, [unwrappedParams.id])
 
-  async function fetchData() {
+async function fetchData() {
     try {
-      if (!user?.id || !params.id) return
+      if (!user?.id || !unwrappedParams.id) return
 
       // Fetch court details
-      const courtResponse = await fetch(`/api/courts?id=${params.id}`)
+      const courtResponse = await fetch(`/api/courts?id=${unwrappedParams.id}`)
       const courtData = await courtResponse.json()
 
       if (!courtResponse.ok) {

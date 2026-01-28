@@ -68,7 +68,7 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
+const body = await request.json()
     const { name, description, address, latitude, longitude, phone, email, images } = body
 
     const result = await db.query(`
@@ -111,8 +111,8 @@ const body = await request.json()
     }
 
     const result = await db.query(`
-      INSERT INTO clubs (owner_id, name, description, address, latitude, longitude, images, is_active, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+      INSERT INTO clubs (owner_id, name, description, address, latitude, longitude, phone, email, images, is_active, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
       RETURNING *
     `, [
       owner_id,
@@ -121,6 +121,8 @@ const body = await request.json()
       address,
       latitude || null,
       longitude || null,
+      phone || null,
+      email || null,
       images || [],
       true
     ])
