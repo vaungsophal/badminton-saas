@@ -57,16 +57,35 @@ async function deleteCourt(courtId: string) {
 async function toggleStatus(courtId: string, currentStatus: string) {
     try {
       const newStatus = currentStatus === 'open' ? 'maintenance' : 'open'
+      const court = courts.find(c => c.id === courtId)
+      
+      if (!court) {
+        throw new Error('Court not found')
+      }
+
+      console.log('Updating court status:', {
+        courtId,
+        currentStatus,
+        newStatus,
+        court
+      })
+
       const response = await fetch(`/api/courts?id=${courtId}&owner_id=${user?.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          status: newStatus
+          club_id: court.club_id,
+          court_name: court.name,
+          price_per_hour: court.price_per_hour,
+          status: newStatus,
+          images: court.images || []
         })
       })
       const data = await response.json()
+
+      console.log('Court status update response:', { status: response.status, data })
 
       if (!response.ok) throw new Error(data.error || 'Failed to update court status')
 

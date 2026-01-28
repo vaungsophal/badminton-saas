@@ -92,7 +92,7 @@ async function fetchData() {
         throw new Error('Please fill in all required fields')
       }
 
-      const response = await fetch(`/api/courts?id=${params.id}&owner_id=${user.id}`, {
+      const response = await fetch(`/api/courts?id=${unwrappedParams.id}&owner_id=${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
