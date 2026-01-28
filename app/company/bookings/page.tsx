@@ -26,9 +26,9 @@ export default function BookingsPage() {
   const [error, setError] = useState('')
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled'>('all')
 
-  useEffect(() => {
+useEffect(() => {
     fetchBookings()
-  }, [user])
+  }, [user, filter])
 
 async function fetchBookings() {
     try {
