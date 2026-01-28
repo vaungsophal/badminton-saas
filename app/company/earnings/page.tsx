@@ -20,8 +20,10 @@ import {
 
 export default function EarningsPage() {
   const { user } = useAuth()
-  const [earnings, setEarnings] = useState<any>(null)
+const [earnings, setEarnings] = useState<any>(null)
   const [chartData, setChartData] = useState<any[]>([])
+  const [monthlyData, setMonthlyData] = useState<any[]>([])
+  const [courtPerformance, setCourtPerformance] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [dateRange, setDateRange] = useState<'month' | 'year' | 'all'>('month')
@@ -36,52 +38,21 @@ async function fetchEarnings() {
     try {
       if (!user?.id) return
 
-      let url = `/api/bookings?owner_id=${user.id}&status=confirmed`
+      let url = `/api/earnings?owner_id=${user.id}&date_range=${dateRange}`
       
-      // Filter by date range
-      if (dateRange === 'month') {
-        const now = new Date()
-        const monthAgo = new Date(now.getFullYear(), now.getMonth(), 1)
-        url += `&start_date=${monthAgo.toISOString()}`
-      } else if (dateRange === 'year') {
-        const now = new Date()
-        const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
-        url += `&start_date=${yearAgo.toISOString()}`
+      // Add custom date range if specified
+      if (startDate && endDate) {
+        url += `&start_date=${startDate}&end_date=${endDate}`
       }
 
       const response = await fetch(url)
-      if (!response.ok) throw new Error('Failed to fetch bookings')
-      const bookings = await response.json()
+      if (!response.ok) throw new Error('Failed to fetch earnings data')
+      const data = await response.json()
 
-      // Calculate earnings
-      const totalEarnings = bookings?.reduce((sum: number, b: any) => sum + (b.total_price || 0), 0) || 0
-      const averageEarning = bookings?.length ? (totalEarnings / bookings.length).toFixed(2) : '0.00'
-      const commission = (totalEarnings * 0.1).toFixed(2) // 10% commission
-      const netEarnings = (totalEarnings - parseFloat(commission as string)).toFixed(2)
-
-      // Group by date
-      const byDate: any = {}
-      bookings?.forEach((b: any) => {
-        const date = b.booking_date?.split('T')[0] || 'Unknown'
-        byDate[date] = (byDate[date] || 0) + b.total_price
-      })
-
-      const data = Object.entries(byDate)
-        .slice(-30)
-        .map(([date, amount]) => ({
-          date: new Date(date as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          earnings: parseFloat(amount as any),
-        }))
-
-      setEarnings({
-        totalEarnings: totalEarnings.toFixed(2),
-        averageEarning,
-        commission,
-        netEarnings,
-        bookingCount: bookings?.length || 0,
-      })
-
-      setChartData(data)
+      setEarnings(data.summary)
+      setChartData(data.dailyEarnings)
+      setMonthlyData(data.monthlyEarnings)
+      setCourtPerformance(data.courtPerformance)
       setLoading(false)
     } catch (err) {
       console.error('[v0] Error fetching earnings:', err)
@@ -92,19 +63,25 @@ async function fetchEarnings() {
 
 async function exportReport() {
     try {
+      // Fetch detailed booking data for export
       const response = await fetch(`/api/bookings?owner_id=${user?.id}&status=confirmed`)
       const bookings = response.ok ? await response.json() : []
 
-      if (!bookings) return
+      if (!bookings || bookings.length === 0) {
+        setError('No data available to export')
+        return
+      }
 
       // Create CSV content
-      const headers = ['Date', 'Court', 'Customer', 'Time', 'Amount']
+      const headers = ['Date', 'Court', 'Customer', 'Time', 'Amount', 'Commission', 'Net Earnings']
       const rows = bookings.map((b: any) => [
         new Date(b.booking_date).toLocaleDateString(),
         b.court_name,
-        b.customer_email,
+        b.customer_email || 'N/A',
         `${b.start_time} - ${b.end_time}`,
-        `$${b.total_price.toFixed(2)}`,
+        `$${parseFloat(b.total_price || 0).toFixed(2)}`,
+        `$${parseFloat(b.commission_amount || 0).toFixed(2)}`,
+        `$${(parseFloat(b.total_price || 0) - parseFloat(b.commission_amount || 0)).toFixed(2)}`,
       ])
 
       const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
@@ -267,8 +244,60 @@ async function exportReport() {
                </BarChart>
              </ResponsiveContainer>
            </CardContent>
+</Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Trend</CardTitle>
+            <CardDescription>12-month earnings overview</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip formatter={(value) => `$${typeof value === 'number' ? value.toFixed(2) : value}`} />
+                <Line type="monotone" dataKey="earnings" stroke="#10b981" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
         </Card>
       </div>
+
+      {/* Court Performance */}
+      {courtPerformance.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Court Performance</CardTitle>
+            <CardDescription>Earnings breakdown by court</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 px-4">Court Name</th>
+                    <th className="text-right py-2 px-4">Bookings</th>
+                    <th className="text-right py-2 px-4">Total Earnings</th>
+                    <th className="text-right py-2 px-4">Avg per Booking</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {courtPerformance.map((court: any, index: number) => (
+                    <tr key={court.courtId} className={`border-b ${index % 2 === 0 ? 'bg-gray-50' : ''}`}>
+                      <td className="py-2 px-4 font-medium">{court.courtName}</td>
+                      <td className="text-right py-2 px-4">{court.bookingCount}</td>
+                      <td className="text-right py-2 px-4 font-semibold">${court.totalEarnings}</td>
+                      <td className="text-right py-2 px-4">${court.averageEarning}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

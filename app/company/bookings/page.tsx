@@ -34,22 +34,44 @@ async function fetchBookings() {
     try {
       if (!user?.id) return
 
-      const response = await fetch(`/api/bookings?owner_id=${user.id}`)
+      setLoading(true)
+      setError('')
+      
+      const params = new URLSearchParams({
+        owner_id: user.id
+      })
+
+      // Add status filter if not 'all'
+      if (filter !== 'all') {
+        params.append('status', filter)
+      }
+
+      const response = await fetch(`/api/bookings?${params}`)
       const data = await response.json()
 
       if (!response.ok) throw new Error(data.error || 'Failed to fetch bookings')
 
-      setBookings(data || [])
-      setLoading(false)
+      // Ensure numeric fields are properly typed
+      const processedData = data.map((booking: any) => ({
+        ...booking,
+        total_price: parseFloat(booking.total_price) || 0,
+        commission_amount: parseFloat(booking.commission_amount) || 0,
+        player_count: parseInt(booking.player_count) || 1
+      }))
+
+      setBookings(processedData || [])
     } catch (err) {
-      console.error('[v0] Error fetching bookings:', err)
+      console.error('Error fetching bookings:', err)
       setError('Failed to load bookings')
+    } finally {
       setLoading(false)
     }
   }
 
 async function updateBookingStatus(bookingId: string, status: string) {
     try {
+      setError('')
+      
       const response = await fetch('/api/bookings', {
         method: 'PUT',
         headers: {
@@ -57,7 +79,7 @@ async function updateBookingStatus(bookingId: string, status: string) {
         },
         body: JSON.stringify({
           id: bookingId,
-          owner_id: user?.id,
+          owner_id: user!.id,
           status
         })
       })
@@ -65,9 +87,10 @@ async function updateBookingStatus(bookingId: string, status: string) {
 
       if (!response.ok) throw new Error(data.error || 'Failed to update booking')
 
+      // Update local state
       setBookings(bookings.map(b => b.id === bookingId ? { ...b, status } : b))
     } catch (err) {
-      console.error('[v0] Error updating booking:', err)
+      console.error('Error updating booking:', err)
       setError('Failed to update booking')
     }
   }

@@ -8,51 +8,60 @@ import { Button } from '@/components/ui/button'
 import { AlertCircle, Download, Calendar, Users, TrendingUp } from 'lucide-react'
 
 export default function ReportsPage() {
-  const { user } = useAuth()
+const { user } = useAuth()
   const [stats, setStats] = useState<any>(null)
+  const [earningsData, setEarningsData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [dateRange, setDateRange] = useState<'month' | 'year' | 'all'>('all')
 
-  useEffect(() => {
+useEffect(() => {
     fetchReportData()
-  }, [user])
+  }, [user, dateRange])
 
 async function fetchReportData() {
     try {
       if (!user?.id) return
 
       // Fetch all data via API
-      const [bookingsRes, courtsRes, clubsRes] = await Promise.all([
-        fetch(`/api/bookings?owner_id=${user.id}`),
+      const [earningsRes, courtsRes, clubsRes] = await Promise.all([
+        fetch(`/api/earnings?owner_id=${user.id}&date_range=${dateRange}`),
         fetch(`/api/courts?owner_id=${user.id}`),
         fetch(`/api/clubs?owner_id=${user.id}`)
       ])
 
-      const bookings = bookingsRes.ok ? await bookingsRes.json() : []
+      const earningsData = earningsRes.ok ? await earningsRes.json() : null
       const courts = courtsRes.ok ? await courtsRes.json() : []
       const clubs = clubsRes.ok ? await clubsRes.json() : []
 
-// Calculate stats
-      const totalRevenue = bookings?.reduce((sum: number, b: any) => {
-        return b.status === 'confirmed' ? sum + (b.total_price || 0) : sum
-      }, 0) || 0
+      // Fetch detailed booking data for status breakdown
+      const bookingsRes = await fetch(`/api/bookings?owner_id=${user.id}`)
+      const bookings = bookingsRes.ok ? await bookingsRes.json() : []
 
+      // Calculate booking status stats
       const confirmedBookings = bookings?.filter((b: any) => b.status === 'confirmed').length || 0
       const pendingBookings = bookings?.filter((b: any) => b.status === 'pending').length || 0
       const cancelledBookings = bookings?.filter((b: any) => b.status === 'cancelled').length || 0
 
-      // Popular courts
-      const courtStats: any = {}
-      bookings?.forEach((b: any) => {
-        if (b.status === 'confirmed') {
-          courtStats[b.court_name] = (courtStats[b.court_name] || 0) + 1
-        }
-      })
-
-const popularCourts = Object.entries(courtStats)
-        .sort(([, a]: any, [, b]: any) => (b as number) - (a as number))
-        .slice(0, 5)
-        .map(([name, count]) => ({ name, count }))
+      // Popular courts (from earnings data or fallback to bookings)
+      let popularCourts = []
+      if (earningsData?.courtPerformance) {
+        popularCourts = earningsData.courtPerformance
+          .sort((a: any, b: any) => b.bookingCount - a.bookingCount)
+          .slice(0, 5)
+          .map((court: any) => ({ name: court.courtName, count: court.bookingCount }))
+      } else {
+        const courtStats: any = {}
+        bookings?.forEach((b: any) => {
+          if (b.status === 'confirmed') {
+            courtStats[b.court_name] = (courtStats[b.court_name] || 0) + 1
+          }
+        })
+        popularCourts = Object.entries(courtStats)
+          .sort(([, a]: any, [, b]: any) => (b as number) - (a as number))
+          .slice(0, 5)
+          .map(([name, count]) => ({ name, count }))
+      }
 
       setStats({
         totalClubs: clubs?.length || 0,
@@ -61,11 +70,14 @@ const popularCourts = Object.entries(courtStats)
         confirmedBookings,
         pendingBookings,
         cancelledBookings,
-        totalRevenue: totalRevenue.toFixed(2),
-        averagePerBooking: confirmedBookings ? (totalRevenue / confirmedBookings).toFixed(2) : '0.00',
+        totalRevenue: earningsData?.summary?.totalEarnings || '0.00',
+        netEarnings: earningsData?.summary?.netEarnings || '0.00',
+        totalCommission: earningsData?.summary?.totalCommission || '0.00',
+        averagePerBooking: earningsData?.summary?.averageEarning || '0.00',
         popularCourts,
       })
 
+      setEarningsData(earningsData)
       setLoading(false)
     } catch (err) {
       console.error('[v0] Error fetching report data:', err)
@@ -80,38 +92,56 @@ const popularCourts = Object.entries(courtStats)
 
 async function exportCSV() {
     try {
-      const response = await fetch(`/api/bookings?owner_id=${user?.id}`)
-      const bookings = response.ok ? await response.json() : []
-
-      if (!bookings) return
-
-      // Create CSV content
-      const headers = [
-        'Booking Date',
-        'Court',
-        'Customer Email',
-        'Start Time',
-        'End Time',
-        'Amount',
-        'Status',
-      ]
-      const rows = bookings.map((b: any) => [
-        new Date(b.booking_date).toLocaleDateString(),
-        b.court_name,
-        b.customer_email,
-        b.start_time,
-        b.end_time,
-        `$${b.total_price.toFixed(2)}`,
-        b.status,
+      const [bookingsRes, earningsRes] = await Promise.all([
+        fetch(`/api/bookings?owner_id=${user?.id}`),
+        fetch(`/api/earnings?owner_id=${user?.id}&date_range=all`)
       ])
 
-      const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
+      const bookings = bookingsRes.ok ? await bookingsRes.json() : []
+      const earningsData = earningsRes.ok ? await earningsRes.json() : null
+
+      if (!bookings || bookings.length === 0) {
+        setError('No data available to export')
+        return
+      }
+
+      // Create comprehensive CSV with summary data first
+      const summaryHeaders = ['Report Summary', '', '', '', '']
+      const summaryData = [
+        ['Report Generated', new Date().toLocaleDateString(), '', '', ''],
+        ['Date Range', dateRange === 'all' ? 'All Time' : dateRange, '', '', ''],
+        ['Total Bookings', bookings?.length || 0, '', '', ''],
+        ['Total Revenue', `$${earningsData?.summary?.totalEarnings || '0.00'}`, '', '', ''],
+        ['Net Earnings', `$${earningsData?.summary?.netEarnings || '0.00'}`, '', '', ''],
+        ['Total Commission', `$${earningsData?.summary?.totalCommission || '0.00'}`, '', '', ''],
+        ['', '', '', '', ''],
+        ['Booking Details', '', '', '', '']
+      ]
+
+      const bookingHeaders = ['Booking Date', 'Court', 'Customer Email', 'Start Time', 'End Time', 'Amount', 'Commission', 'Net Amount', 'Status']
+      const bookingRows = bookings.map((b: any) => [
+        new Date(b.booking_date).toLocaleDateString(),
+        b.court_name || 'N/A',
+        b.customer_email || 'N/A',
+        b.start_time,
+        b.end_time,
+        `$${parseFloat(b.total_price || 0).toFixed(2)}`,
+        `$${parseFloat(b.commission_amount || 0).toFixed(2)}`,
+        `$${(parseFloat(b.total_price || 0) - parseFloat(b.commission_amount || 0)).toFixed(2)}`,
+        b.status
+      ])
+
+      const csv = [
+        ...summaryData.map(row => row.join(',')),
+        bookingHeaders.join(','),
+        ...bookingRows.map(row => row.join(','))
+      ].join('\n')
 
       const blob = new Blob([csv], { type: 'text/csv' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `booking_report_${new Date().toISOString().split('T')[0]}.csv`
+      a.download = `comprehensive_report_${new Date().toISOString().split('T')[0]}.csv`
       a.click()
       window.URL.revokeObjectURL(url)
     } catch (err) {
