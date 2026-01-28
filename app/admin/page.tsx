@@ -1,6 +1,7 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { useAuth } from '@/components/auth-provider'
 import { Card } from '@/components/ui/card'
 import {
     Users,
@@ -23,48 +24,125 @@ import {
     Bar
 } from 'recharts'
 
-const revenueData = [
-    { month: 'Jan', revenue: 4000, bookings: 240 },
-    { month: 'Feb', revenue: 3000, bookings: 198 },
-    { month: 'Mar', revenue: 2000, bookings: 150 },
-    { month: 'Apr', revenue: 2780, bookings: 190 },
-    { month: 'May', revenue: 1890, bookings: 120 },
-    { month: 'Jun', revenue: 2390, bookings: 170 },
-    { month: 'Jul', revenue: 3490, bookings: 210 },
-]
-
-const stats = [
-    {
-        label: 'Total Users',
-        value: '1,284',
-        icon: Users,
-        change: '+12%',
-        isPositive: true
-    },
-    {
-        label: 'Club Owners',
-        value: '42',
-        icon: Building2,
-        change: '+5%',
-        isPositive: true
-    },
-    {
-        label: 'Total Courts',
-        value: '156',
-        icon: Building2,
-        change: '+8%',
-        isPositive: true
-    },
-    {
-        label: 'Total Bookings',
-        value: '3,842',
-        icon: CalendarCheck,
-        change: '+18%',
-        isPositive: true
-    },
-]
+interface AdminDashboardData {
+    overview: {
+        totalUsers: number
+        totalOwners: number
+        totalClubs: number
+        totalCourts: number
+        totalBookings: number
+        confirmedBookings: number
+        pendingBookings: number
+        cancelledBookings: number
+        totalRevenue: number
+        totalCommission: number
+    }
+    revenueData: Array<{
+        month: string
+        revenue: number
+        bookings: number
+    }>
+    growth: {
+        owners: {
+            current: number
+            previous: number
+            percentage: number
+        }
+        users: {
+            current: number
+            previous: number
+            percentage: number
+        }
+        retention: {
+            rate: number
+        }
+    }
+}
 
 export default function AdminDashboardPage() {
+    const { user } = useAuth()
+    const [data, setData] = useState<AdminDashboardData | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
+
+    useEffect(() => {
+        fetchDashboardData()
+    }, [user])
+
+    async function fetchDashboardData() {
+        try {
+            if (!user?.id || user.role !== 'admin') return
+
+            setLoading(true)
+            setError('')
+            
+            const response = await fetch('/api/admin/dashboard')
+            const result = await response.json()
+
+            if (!response.ok) throw new Error(result.error || 'Failed to fetch dashboard data')
+
+            setData(result)
+        } catch (err) {
+            console.error('Error fetching dashboard data:', err)
+            setError('Failed to load dashboard data')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const stats = data ? [
+        {
+            label: 'Total Users',
+            value: data.overview.totalUsers.toLocaleString(),
+            icon: Users,
+            change: `${data.growth.users.percentage > 0 ? '+' : ''}${data.growth.users.percentage.toFixed(1)}%`,
+            isPositive: data.growth.users.percentage > 0
+        },
+        {
+            label: 'Club Owners',
+            value: data.overview.totalOwners.toLocaleString(),
+            icon: Building2,
+            change: `${data.growth.owners.percentage > 0 ? '+' : ''}${data.growth.owners.percentage.toFixed(1)}%`,
+            isPositive: data.growth.owners.percentage > 0
+        },
+        {
+            label: 'Total Courts',
+            value: data.overview.totalCourts.toLocaleString(),
+            icon: Building2,
+            change: '+8%',
+            isPositive: true
+        },
+        {
+            label: 'Total Bookings',
+            value: data.overview.totalBookings.toLocaleString(),
+            icon: CalendarCheck,
+            change: '+18%',
+            isPositive: true
+        },
+    ] : []
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading dashboard...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                        <p className="text-red-700">{error}</p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
     return (
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -107,15 +185,17 @@ export default function AdminDashboardPage() {
                         <h2 className="text-xl font-bold text-gray-900">Platform Revenue</h2>
                         <p className="text-sm text-gray-500">Total earnings from booking commissions</p>
                     </div>
-                    <div className="flex items-center gap-3 bg-green-50 px-4 py-2 rounded-lg border border-green-100">
+<div className="flex items-center gap-3 bg-green-50 px-4 py-2 rounded-lg border border-green-100">
                         <DollarSign className="w-5 h-5 text-green-600" />
-                        <span className="text-2xl font-bold text-green-700">$24,482.00</span>
+                        <span className="text-2xl font-bold text-green-700">
+                            ${data?.overview.totalRevenue.toFixed(2) || '0.00'}
+                        </span>
                     </div>
                 </div>
 
-                <div className="h-[300px] w-full">
+<div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={revenueData}>
+                        <LineChart data={data?.revenueData || []}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                             <XAxis
                                 dataKey="month"
@@ -150,9 +230,9 @@ export default function AdminDashboardPage() {
                 {/* Booking Volume Bar Chart */}
                 <Card className="p-6">
                     <h2 className="text-xl font-bold text-gray-900 mb-6">Booking Volume</h2>
-                    <div className="h-[300px] w-full">
+<div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={revenueData}>
+                            <BarChart data={data?.revenueData || []}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                                 <XAxis
                                     dataKey="month"
@@ -185,7 +265,35 @@ export default function AdminDashboardPage() {
                                     <p className="text-xs text-gray-500">Compared to last month</p>
                                 </div>
                             </div>
-                            <span className="text-green-600 font-bold">+18.2%</span>
+<span className="text-green-600 font-bold">
+                            {(data?.growth.owners.percentage || 0) > 0 ? '+' : ''}{(data?.growth.owners.percentage || 0).toFixed(1)}%
+                        </span>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-purple-100 p-2 rounded-lg">
+                                    <Users className="w-5 h-5 text-purple-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-900">New Users</p>
+                                    <p className="text-xs text-gray-500">Compared to last month</p>
+                                </div>
+                            </div>
+                            <span className="text-green-600 font-bold">
+                                {(data?.growth.users.percentage || 0) > 0 ? '+' : ''}{(data?.growth.users.percentage || 0).toFixed(1)}%
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-orange-100 p-2 rounded-lg">
+                                    <DollarSign className="w-5 h-5 text-orange-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-900">Retention Rate</p>
+                                    <p className="text-xs text-gray-500">Monthly active users</p>
+                                </div>
+                            </div>
+                            <span className="text-blue-600 font-bold">{(data?.growth.retention.rate || 0).toFixed(1)}%</span>
                         </div>
                         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
                             <div className="flex items-center gap-3">

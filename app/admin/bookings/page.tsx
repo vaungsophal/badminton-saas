@@ -122,7 +122,7 @@ export default function AdminBookingsPage() {
       setBookings(processedData || [])
       
       // Extract unique clubs for filter
-      const uniqueClubs = [...new Set(processedData.map((b: Booking) => b.club_name).filter(Boolean))]
+      const uniqueClubs = [...new Set(processedData.map((b: Booking) => b.club_name).filter(Boolean) as string[])]
       setClubs(uniqueClubs)
 
       // Calculate stats

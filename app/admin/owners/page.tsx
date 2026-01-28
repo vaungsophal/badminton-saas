@@ -1,56 +1,77 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { UserCheck, UserX, Building2, Mail, Phone, ExternalLink, ShieldAlert } from 'lucide-react'
 
 interface Owner {
     id: string
-    name: string
+    full_name: string
     email: string
     phone: string
-    company: string
-    courts: number
-    status: 'active' | 'pending' | 'suspended'
-    joinedDate: string
+    company_name: string
+    status: 'active' | 'suspended'
+    is_verified: boolean
+    created_at: string
+    club_count: number
+    court_count: number
 }
 
 export default function AdminOwnersPage() {
     const [filter, setFilter] = useState<'all' | 'pending' | 'active'>('all')
+    const [owners, setOwners] = useState<Owner[]>([])
+    const [loading, setLoading] = useState(true)
 
-    const owners: Owner[] = [
-        {
-            id: '1',
-            name: 'John Business',
-            email: 'john@example.com',
-            phone: '+1 234 567 890',
-            company: 'Downtown Badminton Club',
-            courts: 4,
-            status: 'active',
-            joinedDate: '2025-10-12',
-        },
-        {
-            id: '2',
-            name: 'Sarah Smith',
-            email: 'sarah@sportsmgmt.com',
-            phone: '+1 987 654 321',
-            company: 'Sports Arena',
-            courts: 6,
-            status: 'active',
-            joinedDate: '2025-11-05',
-        },
-        {
-            id: '3',
-            name: 'Mike Pending',
-            email: 'mike@newclub.com',
-            phone: '+1 555 123 456',
-            company: 'New Club',
-            courts: 0,
-            status: 'pending',
-            joinedDate: '2026-01-20',
-        },
-    ]
+    useEffect(() => {
+        fetchOwners()
+    }, [filter])
+
+    const fetchOwners = async () => {
+        try {
+            const params = new URLSearchParams()
+            if (filter !== 'all') {
+                params.append('status', filter)
+            }
+            const response = await fetch(`/api/owners?${params.toString()}`)
+            const data = await response.json()
+            setOwners(data.owners || [])
+        } catch (error) {
+            console.error('Error fetching owners:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleApprove = async (ownerId: string) => {
+        try {
+            const response = await fetch(`/api/owners?id=${ownerId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_verified: true, status: 'active' })
+            })
+            if (response.ok) {
+                fetchOwners()
+            }
+        } catch (error) {
+            console.error('Error approving owner:', error)
+        }
+    }
+
+    const handleSuspend = async (ownerId: string) => {
+        try {
+            const response = await fetch(`/api/owners?id=${ownerId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'suspended' })
+            })
+            if (response.ok) {
+                fetchOwners()
+            }
+        } catch (error) {
+            console.error('Error suspending owner:', error)
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -75,8 +96,13 @@ export default function AdminOwnersPage() {
                         {f.charAt(0).toUpperCase() + f.slice(1)}
                     </button>
                 ))}
-            </div>
+</div>
 
+            {loading ? (
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-gray-500">Loading owners...</div>
+                </div>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {owners.map((owner) => (
                     <Card key={owner.id} className="p-6 border border-gray-100 hover:shadow-lg transition-shadow bg-white">
@@ -85,14 +111,15 @@ export default function AdminOwnersPage() {
                                 <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center border border-blue-100">
                                     <Building2 className="w-6 h-6 text-blue-600" />
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-900 text-lg">{owner.name}</h3>
-                                    <p className="text-sm text-gray-500">{owner.company}</p>
+<div>
+                                    <h3 className="font-bold text-gray-900 text-lg">{owner.full_name}</h3>
+                                    <p className="text-sm text-gray-500">{owner.company_name || 'No company'}</p>
                                 </div>
                             </div>
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${owner.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+<span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                                owner.is_verified && owner.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                                 }`}>
-                                {owner.status}
+                                {owner.is_verified && owner.status === 'active' ? 'active' : 'pending'}
                             </span>
                         </div>
 
@@ -105,24 +132,24 @@ export default function AdminOwnersPage() {
                                 <Phone className="w-4 h-4" />
                                 <span>{owner.phone}</span>
                             </div>
-                            <div className="flex items-center justify-between text-sm pt-2">
+<div className="flex items-center justify-between text-sm pt-2">
                                 <span className="text-gray-400">Courts Managed</span>
-                                <span className="font-bold text-gray-900">{owner.courts}</span>
+                                <span className="font-bold text-gray-900">{owner.court_count}</span>
                             </div>
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-400">Joined Date</span>
-                                <span className="font-medium text-gray-700">{owner.joinedDate}</span>
+                                <span className="font-medium text-gray-700">{new Date(owner.created_at).toLocaleDateString()}</span>
                             </div>
                         </div>
 
-                        <div className="flex gap-2">
-                            {owner.status === 'pending' ? (
-                                <Button className="flex-1 bg-green-600 hover:bg-green-700 gap-2">
+<div className="flex gap-2">
+                            {(!owner.is_verified || owner.status !== 'active') ? (
+                                <Button className="flex-1 bg-green-600 hover:bg-green-700 gap-2" onClick={() => handleApprove(owner.id)}>
                                     <UserCheck className="w-4 h-4" />
                                     Approve
                                 </Button>
                             ) : (
-                                <Button variant="outline" className="flex-1 text-red-600 border-red-100 hover:bg-red-50 gap-2">
+                                <Button variant="outline" className="flex-1 text-red-600 border-red-100 hover:bg-red-50 gap-2" onClick={() => handleSuspend(owner.id)}>
                                     <ShieldAlert className="w-4 h-4" />
                                     Suspend
                                 </Button>
@@ -132,8 +159,9 @@ export default function AdminOwnersPage() {
                             </Button>
                         </div>
                     </Card>
-                ))}
-            </div>
+))}
+                </div>
+            )}
         </div>
     )
 }

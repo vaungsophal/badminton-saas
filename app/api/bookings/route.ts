@@ -9,6 +9,9 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const startDate = searchParams.get('start_date')
     const endDate = searchParams.get('end_date')
+    const adminView = searchParams.get('admin_view')
+    const search = searchParams.get('search')
+    const clubName = searchParams.get('club_name')
 
     let query = `
 SELECT 
@@ -19,24 +22,31 @@ SELECT
         cl.owner_id,
         up.email as customer_email,
         up.full_name as customer_name,
+        owner_up.email as owner_email,
+        owner_up.full_name as owner_name,
         CAST(b.total_price AS DECIMAL) as total_price,
-        CAST(b.commission_amount AS DECIMAL) as commission_amount
+        CAST(b.commission_amount AS DECIMAL) as commission_amount,
+        b.player_count
       FROM bookings b
       LEFT JOIN courts c ON b.court_id = c.id
       LEFT JOIN clubs cl ON c.club_id = cl.id
       LEFT JOIN user_profiles up ON b.customer_id = up.id
+      LEFT JOIN user_profiles owner_up ON cl.owner_id = owner_up.id
     `
     const params = []
     const conditions = []
 
-if (ownerId) {
-      conditions.push('cl.owner_id = $' + (params.length + 1))
-      params.push(ownerId)
-    }
+    // Admin view gets all bookings, others are filtered by role
+    if (!adminView) {
+      if (ownerId) {
+        conditions.push('cl.owner_id = $' + (params.length + 1))
+        params.push(ownerId)
+      }
 
-    if (customerId) {
-      conditions.push('b.customer_id = $' + (params.length + 1))
-      params.push(customerId)
+      if (customerId) {
+        conditions.push('b.customer_id = $' + (params.length + 1))
+        params.push(customerId)
+      }
     }
 
     if (status) {
@@ -44,7 +54,7 @@ if (ownerId) {
       params.push(status)
     }
 
-if (startDate) {
+    if (startDate) {
       conditions.push('b.booking_date >= $' + (params.length + 1))
       params.push(startDate)
     }
@@ -52,6 +62,22 @@ if (startDate) {
     if (endDate) {
       conditions.push('b.booking_date <= $' + (params.length + 1))
       params.push(endDate)
+    }
+
+    if (clubName) {
+      conditions.push('cl.name ILIKE $' + (params.length + 1))
+      params.push(`%${clubName}%`)
+    }
+
+    if (search) {
+      conditions.push(`(
+        up.email ILIKE $${params.length + 1} OR 
+        up.full_name ILIKE $${params.length + 1} OR 
+        c.name ILIKE $${params.length + 1} OR 
+        cl.name ILIKE $${params.length + 1} OR 
+        owner_up.email ILIKE $${params.length + 1}
+      )`)
+      params.push(`%${search}%`)
     }
 
     if (conditions.length > 0) {
@@ -62,6 +88,11 @@ if (startDate) {
 
     const result = await db.query(query, params)
     const bookings = result.rows
+    
+    if (adminView) {
+      return NextResponse.json({ bookings })
+    }
+    
     return NextResponse.json(bookings)
   } catch (error) {
     console.error('Error fetching bookings:', error)
@@ -232,7 +263,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, owner_id, customer_id, status, create_payment } = body
+    const { id, owner_id, customer_id, status, create_payment, admin_view } = body
 
     // Start a transaction
     await db.query('BEGIN')
@@ -240,7 +271,13 @@ export async function PUT(request: NextRequest) {
     try {
       let result
       
-      if (owner_id) {
+      if (admin_view) {
+        // Admin update - can update any booking
+        result = await db.query(
+          'UPDATE bookings SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+          [status, id]
+        )
+      } else if (owner_id) {
         // Owner update
         result = await db.query(
           'UPDATE bookings SET status = $1, updated_at = NOW() WHERE id = $2 AND owner_id = $3 RETURNING *',

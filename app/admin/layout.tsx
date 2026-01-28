@@ -14,6 +14,7 @@ import {
     LogOut,
     ShieldCheck
 } from 'lucide-react'
+import { Toaster } from '@/components/ui/toaster'
 
 export default function AdminLayout({
     children,
@@ -113,10 +114,11 @@ useEffect(() => {
                     </button>
                 </header>
 
-                <div className="p-8 max-w-7xl mx-auto">
+<div className="p-8 max-w-7xl mx-auto">
                     {children}
                 </div>
             </main>
+            <Toaster />
         </div>
     )
 }
