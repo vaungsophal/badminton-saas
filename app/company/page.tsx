@@ -161,10 +161,20 @@ async function fetchDashboardStats() {
             <CardDescription>Last 7 days booking activity</CardDescription>
           </CardHeader>
           <CardContent>
-<ResponsiveContainer width="100%" height={300}>
-              <div className="flex items-center justify-center h-64 text-gray-500">
-                <p>Chart data will be available when bookings are made</p>
-              </div>
+            <ResponsiveContainer width="100%" height={300}>
+              {stats?.bookingsTrend?.length > 0 ? (
+                <LineChart data={stats.bookingsTrend}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="bookings" stroke="#3b82f6" strokeWidth={2} />
+                </LineChart>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-gray-500">
+                  <p>Booking data will appear here</p>
+                </div>
+              )}
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -174,11 +184,31 @@ async function fetchDashboardStats() {
             <CardTitle>Revenue Distribution</CardTitle>
             <CardDescription>By courts</CardDescription>
           </CardHeader>
-          <CardContent>
-<ResponsiveContainer width="100%" height={300}>
-              <div className="flex items-center justify-center h-64 text-gray-500">
-                <p>Revenue trends will appear here</p>
-              </div>
+<CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              {stats?.revenueDistribution?.length > 0 ? (
+                <PieChart>
+                  <Pie
+                    data={stats.revenueDistribution}
+                    dataKey="totalRevenue"
+                    nameKey="courtName"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    label
+                  >
+                    {stats.revenueDistribution.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][index % 5]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-gray-500">
+                  <p>Revenue data will appear here</p>
+                </div>
+              )}
             </ResponsiveContainer>
           </CardContent>
         </Card>

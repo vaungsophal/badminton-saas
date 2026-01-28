@@ -1,46 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Clock, Users, Mail, Phone } from 'lucide-react'
+import { Clock, Users, Mail, Phone, CreditCard, AlertCircle } from 'lucide-react'
+import { useAuth } from '@/components/auth-provider'
+import Link from 'next/link'
 
 interface CourtBooking {
   id: string
-  customerName: string
-  customerEmail: string
-  court: string
-  date: string
-  time: string
-  players: number
-  status: 'confirmed' | 'completed' | 'cancelled'
+  customer_name: string
+  customer_email: string
+  court_name: string
+  club_name: string
+  booking_date: string
+  start_time: string
+  end_time: string
+  player_count: number
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  total_price: number
+  payment_method?: string
 }
 
 export default function BookingsPage() {
+  const { user, token } = useAuth()
+  const [bookings, setBookings] = useState<CourtBooking[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [filter, setFilter] = useState<'all' | 'today' | 'pending'>('all')
-
-  const bookings: CourtBooking[] = [
-    {
-      id: '1',
-      customerName: 'John Smith',
-      customerEmail: 'john@example.com',
-      court: 'Court 1',
-      date: '2024-02-10',
-      time: '18:00 - 19:00',
-      players: 4,
-      status: 'confirmed',
-    },
-    {
-      id: '2',
-      customerName: 'Sarah Johnson',
-      customerEmail: 'sarah@example.com',
-      court: 'Court 2',
-      date: '2024-02-10',
-      time: '19:00 - 20:00',
-      players: 2,
-      status: 'confirmed',
-    },
-  ]
+  const [processingBooking, setProcessingBooking] = useState<string | null>(null)
 
   return (
     <div className="space-y-6">
