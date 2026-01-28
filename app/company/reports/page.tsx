@@ -132,9 +132,9 @@ async function exportCSV() {
       ])
 
       const csv = [
-        ...summaryData.map(row => row.join(',')),
+        ...summaryData.map((row: string[]) => row.join(',')),
         bookingHeaders.join(','),
-        ...bookingRows.map(row => row.join(','))
+        ...bookingRows.map((row: string[]) => row.join(','))
       ].join('\n')
 
       const blob = new Blob([csv], { type: 'text/csv' })
@@ -180,16 +180,30 @@ async function exportCSV() {
         </div>
       </div>
 
-      {error && (
+{error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <p className="text-red-700">{error}</p>
         </div>
       )}
 
-      {/* Business Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
+      {/* Date Range Filter */}
+      <div className="flex gap-2 mb-6">
+        {(['month', 'year', 'all'] as const).map((range) => (
+          <Button
+            key={range}
+            variant={dateRange === range ? 'default' : 'outline'}
+            onClick={() => setDateRange(range)}
+            className={dateRange === range ? 'bg-blue-600 hover:bg-blue-700' : ''}
+          >
+            {range === 'all' ? 'All Time' : range.charAt(0).toUpperCase() + range.slice(1)}
+          </Button>
+        ))}
+      </div>
+
+{/* Business Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
               <Calendar className="w-4 h-4" />
@@ -223,7 +237,7 @@ async function exportCSV() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              Revenue
+              Gross Revenue
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -231,25 +245,42 @@ async function exportCSV() {
             <p className="text-sm text-gray-600">Avg: ${stats?.averagePerBooking} per booking</p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Net Earnings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-blue-600 mb-2">${stats?.netEarnings}</p>
+            <p className="text-sm text-gray-600">Commission: ${stats?.totalCommission}</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Popular Courts */}
+{/* Popular Courts */}
       <Card>
         <CardHeader>
           <CardTitle>Top Performing Courts</CardTitle>
-          <CardDescription>Courts with most bookings</CardDescription>
+          <CardDescription>Courts with most bookings and revenue</CardDescription>
         </CardHeader>
         <CardContent>
-          {stats?.popularCourts?.length > 0 ? (
+          {earningsData?.courtPerformance?.length > 0 ? (
             <div className="space-y-3">
-              {stats.popularCourts.map((court: any, idx: number) => (
-                <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              {earningsData.courtPerformance
+                .sort((a: any, b: any) => b.bookingCount - a.bookingCount)
+                .slice(0, 5)
+                .map((court: any, idx: number) => (
+                <div key={court.courtId} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">#{idx + 1} {court.name}</p>
+                    <p className="font-medium text-gray-900">#{idx + 1} {court.courtName}</p>
+                    <p className="text-xs text-gray-600">Avg: ${court.averageEarning} per booking</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-gray-900">{court.count}</p>
-                    <p className="text-xs text-gray-600">bookings</p>
+                    <p className="font-bold text-gray-900">{court.bookingCount}</p>
+                    <p className="text-xs text-gray-600">${court.totalEarnings} total</p>
                   </div>
                 </div>
               ))}
@@ -260,17 +291,19 @@ async function exportCSV() {
         </CardContent>
       </Card>
 
-      {/* Quick Facts */}
+{/* Quick Facts */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Quick Facts</CardTitle>
+          <CardTitle>Business Insights</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm text-gray-600">
             <li>• Your platform has hosted {stats?.totalBookings} bookings</li>
             <li>• Average booking value is ${stats?.averagePerBooking}</li>
             <li>• You're operating {stats?.totalCourts} courts across {stats?.totalClubs} clubs</li>
-            <li>• {((stats?.confirmedBookings / stats?.totalBookings) * 100).toFixed(0)}% of bookings are confirmed</li>
+            <li>• {stats?.totalBookings > 0 ? ((stats?.confirmedBookings / stats?.totalBookings) * 100).toFixed(0) : 0}% of bookings are confirmed</li>
+            <li>• Platform commission rate: {stats?.totalRevenue > 0 ? ((parseFloat(stats?.totalCommission) / parseFloat(stats?.totalRevenue)) * 100).toFixed(1) : 0}%</li>
+            <li>• Report period: {dateRange === 'all' ? 'All Time' : dateRange.charAt(0).toUpperCase() + dateRange.slice(1)}</li>
           </ul>
         </CardContent>
       </Card>
