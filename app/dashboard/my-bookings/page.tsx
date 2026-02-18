@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MapPin, Clock, Users, CheckCircle, XCircle, AlertCircle, Calendar } from 'lucide-react'
+import { Clock, Users, CheckCircle, XCircle, AlertCircle, Calendar, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import Link from 'next/link'
 
@@ -18,9 +17,6 @@ interface Booking {
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
   total_price: number
   payment_method?: string
-  commission_amount: number
-  created_at: string
-  updated_at: string
 }
 
 export default function MyBookingsPage() {
@@ -28,7 +24,7 @@ export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed' | 'pending'>('all')
+  const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed' | 'pending'>('all')
 
   useEffect(() => {
     fetchBookings()
@@ -43,12 +39,7 @@ const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed' | 'pending
     try {
       setLoading(true)
       setError('')
-      
-      const params = new URLSearchParams({
-        customer_id: user!.id
-      })
-
-      // Add date filtering for upcoming/completed
+      const params = new URLSearchParams({ customer_id: user!.id })
       const today = new Date().toISOString().split('T')[0]
       if (filter === 'upcoming') {
         params.append('start_date', today)
@@ -60,28 +51,17 @@ const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed' | 'pending
       }
 
       const response = await fetch(`/api/bookings?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch bookings')
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch bookings')
       const data = await response.json()
-      
-      // Ensure numeric fields are properly typed
-      const processedData = data.map((booking: any) => ({
-        ...booking,
-        total_price: parseFloat(booking.total_price) || 0,
-        commission_amount: parseFloat(booking.commission_amount) || 0,
-        player_count: parseInt(booking.player_count) || 1
-      }))
-      
-      setBookings(processedData)
+      setBookings(data.map((b: any) => ({
+        ...b,
+        total_price: parseFloat(b.total_price) || 0,
+        player_count: parseInt(b.player_count) || 1
+      })))
     } catch (err) {
-      console.error('Error fetching bookings:', err)
       setError('Failed to load bookings')
     } finally {
       setLoading(false)
@@ -89,8 +69,7 @@ const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed' | 'pending
   }
 
   async function cancelBooking(bookingId: string) {
-    if (!confirm('Are you sure you want to cancel this booking?')) return
-
+    if (!confirm('Cancel this booking?')) return
     try {
       const response = await fetch('/api/bookings', {
         method: 'PUT',
@@ -98,151 +77,178 @@ const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed' | 'pending
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          id: bookingId,
-          customer_id: user!.id,
-          status: 'cancelled'
-        })
+        body: JSON.stringify({ id: bookingId, customer_id: user!.id, status: 'cancelled' })
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to cancel booking')
-      }
-
+      if (!response.ok) throw new Error('Failed to cancel')
       await fetchBookings()
     } catch (err) {
-      console.error('Error cancelling booking:', err)
       setError('Failed to cancel booking')
     }
   }
 
-if (loading) {
+  const upcomingCount = bookings.filter(b => b.status === 'confirmed').length
+
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading bookings...</p>
+      <div className="pb-20 space-y-4">
+        <div className="h-20 bg-gray-100 rounded-2xl animate-pulse" />
+        <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-28 bg-gray-100 rounded-2xl animate-pulse" />
+          ))}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Bookings</h1>
-        <p className="text-gray-600">View and manage your court bookings</p>
+    <div className="pb-20 space-y-4 sm:space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">My Bookings</h1>
+          <p className="text-sm text-gray-500">{bookings.length} total bookings</p>
+        </div>
+        {upcomingCount > 0 && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-xs font-semibold text-green-700">{upcomingCount} upcoming</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
+        {(['all', 'upcoming', 'pending', 'completed'] as const).map((f) => {
+          const count = f === 'all' ? bookings.length : 
+            f === 'upcoming' ? bookings.filter(b => b.status === 'confirmed').length :
+            f === 'pending' ? bookings.filter(b => b.status === 'pending').length :
+            bookings.filter(b => b.status === 'completed').length
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-all ${
+                filter === f
+                  ? 'bg-orange-500 text-white shadow-md'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                filter === f ? 'bg-white/20' : 'bg-gray-100'
+              }`}>{count}</span>
+            </button>
+          )
+        })}
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-red-700">{error}</p>
+        <div className="p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-600 text-sm">
+          <AlertCircle className="w-4 h-4" />
+          {error}
         </div>
       )}
 
-      <div className="flex gap-3">
-        {(['all', 'upcoming', 'completed', 'pending'] as const).map((f) => (
-          <Button
-            key={f}
-            onClick={() => setFilter(f)}
-            variant={filter === f ? 'default' : 'outline'}
-            className={filter === f ? 'bg-blue-600 hover:bg-blue-700' : ''}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </Button>
-        ))}
-      </div>
-
-      <div className="space-y-4">
+      <div className="space-y-3">
         {bookings.length > 0 ? (
           bookings.map((booking) => (
-            <Card key={booking.id} className="p-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {booking.court_name}
-                    </h3>
-                    <span className="text-sm text-gray-500">at {booking.club_name}</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      <span>{booking.booking_date}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Clock className="w-4 h-4" />
-                      <span>{booking.start_time} - {booking.end_time}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Users className="w-4 h-4" />
-                      <span>{booking.player_count} players</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                        {booking.payment_method === 'aba_payway' ? 'ABA PayWay' : 'Pay Later'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 font-semibold text-gray-900">
-                      ${booking.total_price.toFixed(2)}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {booking.status === 'completed' ? (
-                        <>
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span className="text-green-600 font-medium">Completed</span>
-                        </>
-                      ) : booking.status === 'cancelled' ? (
-                        <>
-                          <XCircle className="w-4 h-4 text-red-600" />
-                          <span className="text-red-600 font-medium">Cancelled</span>
-                        </>
-                      ) : booking.status === 'pending' ? (
-                        <>
-                          <AlertCircle className="w-4 h-4 text-yellow-600" />
-                          <span className="text-yellow-600 font-medium">Pending</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="w-4 h-4 text-blue-600" />
-                          <span className="text-blue-600 font-medium">Confirmed</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {booking.status === 'confirmed' && (
-                    <>
-                      <Button 
-                        variant="outline" 
-                        className="text-red-600 bg-transparent"
-                        onClick={() => cancelBooking(booking.id)}
-                      >
-                        Cancel
-                      </Button>
-                    </>
-                  )}
-                  {booking.status === 'completed' && (
-                    <Link href="/dashboard">
-                      <Button className="bg-blue-600 hover:bg-blue-700">
-                        Book Again
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </Card>
+            <BookingCard 
+              key={booking.id} 
+              booking={booking} 
+              onCancel={cancelBooking}
+            />
           ))
         ) : (
-          <Card className="p-12 text-center">
-            <p className="text-gray-600 mb-4">No bookings found</p>
-            <Link href="/dashboard">
-              <Button className="bg-blue-600 hover:bg-blue-700">Browse Courts</Button>
+          <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
+            <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center text-orange-500 mx-auto mb-3">
+              <Calendar className="w-6 h-6" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">No bookings found</h3>
+            <p className="text-sm text-gray-500 mb-4">Book your first court to get started</p>
+            <Link href="/dashboard/browse">
+              <Button className="h-10 px-6 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg text-sm">
+                Browse Courts
+              </Button>
             </Link>
-          </Card>
+          </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+function BookingCard({ booking, onCancel }: { booking: Booking, onCancel: (id: string) => void }) {
+  const isUpcoming = new Date(booking.booking_date) >= new Date()
+  const date = new Date(booking.booking_date)
+  
+  const statusConfig = {
+    confirmed: { label: 'Confirmed', bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' },
+    pending: { label: 'Pending', bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
+    completed: { label: 'Done', bg: 'bg-green-50', text: 'text-green-700', dot: 'bg-green-500' },
+    cancelled: { label: 'Cancelled', bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500' },
+  }
+  const status = statusConfig[booking.status] || statusConfig.pending
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+      <div className="flex">
+        <div className="w-16 sm:w-20 bg-gray-50 flex flex-col items-center justify-center p-2 shrink-0">
+          <span className="text-[10px] font-medium text-gray-400 uppercase">{date.toLocaleDateString('en-US', { month: 'short' })}</span>
+          <span className="text-xl font-bold text-gray-900">{date.getDate()}</span>
+        </div>
+        
+        <div className="flex-1 p-3 sm:p-4 min-w-0">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-gray-900 truncate">{booking.court_name}</h3>
+              <p className="text-xs text-gray-500 truncate">{booking.club_name}</p>
+            </div>
+            <div className={`px-2 py-1 rounded-full text-[10px] font-medium ${status.bg} ${status.text} flex items-center gap-1 shrink-0`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+              {status.label}
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {booking.start_time} - {booking.end_time}
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              {booking.player_count}
+            </span>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <span className="text-base font-bold text-orange-500">${booking.total_price.toFixed(2)}</span>
+            
+            <div className="flex gap-2">
+              {booking.status === 'confirmed' && isUpcoming && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onCancel(booking.id)}
+                  className="h-8 px-3 text-xs font-medium text-red-600 border-red-100 hover:bg-red-50 hover:border-red-200 rounded-lg"
+                >
+                  Cancel
+                </Button>
+              )}
+              {booking.status === 'completed' && (
+                <Link href="/dashboard/browse" className="h-8 px-3 flex items-center gap-1 bg-gray-900 hover:bg-orange-500 text-white text-xs font-medium rounded-lg transition-colors">
+                  Book Again
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+              )}
+              {booking.status === 'pending' && (
+                <span className="text-xs text-yellow-600 flex items-center">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Awaiting confirmation
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

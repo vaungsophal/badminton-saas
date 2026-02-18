@@ -105,10 +105,10 @@ export default function AdminUsersPage() {
 
 return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">User Management</h1>
-                    <p className="text-gray-600">View and manage all platform participants</p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="space-y-1">
+                    <h1 className="text-4xl font-black text-gray-900 tracking-tight">User Management</h1>
+                    <p className="text-gray-500 font-medium">View and manage all platform participants</p>
                 </div>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

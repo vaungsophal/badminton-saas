@@ -4,130 +4,71 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from './auth-provider'
-
-import { Button } from '@/components/ui/button'
-import { LogOut, LayoutDashboard, Settings } from 'lucide-react'
+import { Settings, LogOut, ChevronDown } from 'lucide-react'
 
 export function DashboardNav() {
   const { user, signOut } = useAuth()
-  const router = useRouter()
+  const [profileOpen, setProfileOpen] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
   }
 
-  const [menuOpen, setMenuOpen] = useState(false)
-
   if (!user) return null
 
-  const navLinks = [
-    ...(user.role === 'admin' ? [
-      { href: '/dashboard', label: 'Dashboard' },
-      { href: '/dashboard/admin/courts', label: 'Manage Courts' },
-      { href: '/dashboard/admin/users', label: 'Manage Users' },
-    ] : []),
-    ...(user.role === 'club_owner' ? [
-      { href: '/dashboard', label: 'Dashboard' },
-      { href: '/dashboard/courts/new', label: 'Add Court' },
-      { href: '/dashboard/bookings', label: 'Bookings' },
-    ] : []),
-    ...(user.role === 'customer' ? [
-      { href: '/dashboard', label: 'Home' },
-      { href: '/dashboard/browse', label: 'Browse' },
-      { href: '/dashboard/my-bookings', label: 'My Bookings' },
-    ] : []),
-  ]
-
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14 sm:h-16">
-          <div className="flex items-center gap-4 sm:gap-8">
-            <Link href="/" className="flex items-center gap-2">
-              <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-              <span className="font-bold text-gray-900 text-sm sm:text-base">Badminton Pro</span>
-            </Link>
+    <nav className="bg-white/95 backdrop-blur-lg border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <img src="/logo-main.png" alt="badmintonzone.com" className="h-10" />
+          </Link>
 
-            <div className="hidden md:flex items-center gap-4 sm:gap-6">
-              {navLinks.map(link => (
-                <Link key={link.href} href={link.href} className="text-gray-600 hover:text-blue-600 text-sm font-medium transition-colors px-2 py-1 rounded-md hover:bg-blue-50">
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Link href="/dashboard/settings" className="text-gray-600 hover:text-gray-900 p-1.5 rounded-md hover:bg-gray-100">
-              <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-            </Link>
-            
-            <div className="hidden sm:flex items-center gap-4">
-              <div className="text-sm text-right">
-                <p className="text-gray-900 font-medium leading-none mb-1">{user.email.split('@')[0]}</p>
-                <p className="text-gray-500 text-xs capitalize">{user.role.replace('_', ' ')}</p>
-              </div>
-
-              <Button
-                onClick={handleSignOut}
-                variant="ghost"
-                size="sm"
-                className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </Button>
-            </div>
-
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="flex items-center gap-2 pl-2 py-1.5 hover:bg-gray-50 rounded-full transition-colors"
             >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {menuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                )}
-              </svg>
+              <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center">
+                <span className="text-orange-600 font-bold text-sm">
+                  {user.email?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              </div>
+              <ChevronDown className="w-4 h-4 text-gray-400" />
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white p-4 space-y-4 shadow-lg animate-in slide-in-from-top duration-200">
-          <div className="space-y-2">
-            {navLinks.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-          <div className="pt-4 border-t border-gray-100">
-            <div className="flex items-center justify-between px-3 mb-4">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-800 truncate">{user.email}</p>
-                <p className="text-xs font-medium text-gray-500 capitalize">{user.role.replace('_', ' ')}</p>
+        {profileOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+            <div className="absolute top-14 right-4 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in slide-in-from-top-2">
+              <div className="px-4 py-3 border-b border-gray-100">
+                <p className="font-semibold text-gray-900 text-sm truncate">{user.email?.split('@')[0]}</p>
+                <p className="text-xs text-gray-500">{user.email}</p>
+                <span className="inline-block mt-1 px-2 py-0.5 bg-orange-50 text-orange-600 text-[10px] font-bold rounded-full uppercase">
+                  {user.role?.replace('_', ' ')}
+                </span>
               </div>
-              <button
+              <Link 
+                href="/dashboard/settings"
+                onClick={() => setProfileOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-orange-500 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                <span className="text-sm font-medium">Settings</span>
+              </Link>
+              <button 
                 onClick={handleSignOut}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-red-500 hover:bg-red-50 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
-                Sign Out
+                <span className="text-sm font-medium">Sign Out</span>
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </nav>
   )
 }

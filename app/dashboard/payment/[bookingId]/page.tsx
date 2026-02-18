@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { PaymentCheckout } from '@/components/payment-checkout'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Loader2 } from 'lucide-react'
 
 export default function PaymentPage() {
   const params = useParams()
@@ -18,91 +18,83 @@ export default function PaymentPage() {
     time: string
     amount: number
   } | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // In a real app, this would fetch from the database
-    // For now, we'll use query params or stored state
-    const searchParams = new URLSearchParams(window.location.search)
-    setBookingData({
-      id: bookingId,
-      courtName: searchParams.get('court') || 'Downtown Badminton Club',
-      date: searchParams.get('date') || '2024-02-10',
-      time: searchParams.get('time') || '18:00 - 19:00',
-      amount: parseInt(searchParams.get('amount') || '25'),
-    })
+    setTimeout(() => {
+      const searchParams = new URLSearchParams(window.location.search)
+      setBookingData({
+        id: bookingId,
+        courtName: searchParams.get('court') || 'Badminton Court',
+        date: searchParams.get('date') || new Date().toISOString().split('T')[0],
+        time: searchParams.get('time') || '09:00 - 10:00',
+        amount: parseInt(searchParams.get('amount') || '25'),
+      })
+      setLoading(false)
+    }, 500)
   }, [bookingId])
 
-  if (!bookingData) {
+  if (loading || !bookingData) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading payment...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="w-12 h-12 border-4 border-orange-100 border-t-orange-500 rounded-full animate-spin" />
+        <p className="text-gray-400 font-bold tracking-widest uppercase text-xs">Loading payment...</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        Back
-      </button>
+    <div className="pb-20 space-y-4 sm:space-y-6">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-400 hover:text-orange-500 font-medium text-sm transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Back
+        </button>
+      </div>
 
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete Payment</h1>
-        <p className="text-gray-600">
-          Secure payment for {bookingData.courtName}
-        </p>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Payment</h1>
+        <p className="text-sm text-gray-500">{bookingData.courtName}</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <PaymentCheckout
-            bookingId={bookingData.id}
-            amount={bookingData.amount}
-            courtName={bookingData.courtName}
-            date={bookingData.date}
-            time={bookingData.time}
-          />
+      <Card className="rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+        <h2 className="font-semibold text-gray-900 mb-4">Order Summary</h2>
+        <div className="space-y-3">
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-500">Court</span>
+            <span className="text-sm font-medium text-gray-900">{bookingData.courtName}</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-500">Date</span>
+            <span className="text-sm font-medium text-gray-900">{bookingData.date}</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-500">Time</span>
+            <span className="text-sm font-medium text-gray-900">{bookingData.time}</span>
+          </div>
+          <div className="flex justify-between py-3">
+            <span className="font-semibold text-gray-900">Total</span>
+            <span className="text-2xl font-bold text-orange-500">${bookingData.amount}</span>
+          </div>
         </div>
+      </Card>
 
-        <div>
-          <Card className="p-6 sticky top-4">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Order Summary
-            </h2>
-            <div className="space-y-3 mb-6">
-              <div>
-                <p className="text-sm text-gray-600">Court</p>
-                <p className="font-semibold text-gray-900">{bookingData.courtName}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Date & Time</p>
-                <p className="font-semibold text-gray-900">
-                  {bookingData.date} at {bookingData.time}
-                </p>
-              </div>
-              <div className="border-t pt-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Amount</span>
-                  <span className="text-2xl font-bold text-blue-600">
-                    ${bookingData.amount}
-                  </span>
-                </div>
-              </div>
-            </div>
+      <Card className="rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+        <PaymentCheckout
+          bookingId={bookingData.id}
+          amount={bookingData.amount}
+          courtName={bookingData.courtName}
+          date={bookingData.date}
+          time={bookingData.time}
+        />
+      </Card>
 
-            <p className="text-xs text-gray-500 text-center">
-              Your payment is secured with Stripe encryption
-            </p>
-          </Card>
-        </div>
-      </div>
+      <p className="text-center text-xs text-gray-400">
+        Secured by ABA PayWay
+      </p>
     </div>
   )
 }

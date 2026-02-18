@@ -15,17 +15,16 @@ const _geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Badminton Pro - Court Booking',
-  description: 'Book badminton courts online with Badminton Pro',
-  generator: 'v0.app',
+  title: 'badmintonzone.com | Premium Badminton Court Booking',
+  description: 'Book world-class badminton courts easily. The premium experience for racket athletes.',
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
+        url: '/logo-main.png',
         media: '(prefers-color-scheme: light)',
       },
       {
-        url: '/icon-dark-32x32.png',
+        url: '/logo-main.png',
         media: '(prefers-color-scheme: dark)',
       },
       {

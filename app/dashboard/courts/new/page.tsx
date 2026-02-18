@@ -1,13 +1,12 @@
 'use client'
 
 import React from "react"
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Loader2 } from 'lucide-react'
 
 export default function NewCourtPage() {
   const router = useRouter()
@@ -22,15 +21,7 @@ export default function NewCourtPage() {
     amenities: [] as string[],
   })
 
-  const amenitiesOptions = [
-    'AC',
-    'Parking',
-    'Canteen',
-    'Shower',
-    'Locker',
-    'WiFi',
-    'Event Space',
-  ]
+  const amenitiesOptions = ['AC', 'Parking', 'WiFi', 'Shower', 'Locker', 'Canteen']
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -53,9 +44,7 @@ export default function NewCourtPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-
     try {
-      // API call would happen here
       await new Promise((resolve) => setTimeout(resolve, 1000))
       router.push('/dashboard?success=true')
     } catch (error) {
@@ -66,158 +55,126 @@ export default function NewCourtPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        Back
-      </button>
-
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Court</h1>
-        <p className="text-gray-600">Create a new badminton court listing</p>
+    <div className="pb-20 space-y-4 sm:space-y-6">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-400 hover:text-orange-500 font-medium text-sm transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Back
+        </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Add New Court</h1>
+        <p className="text-sm text-gray-500">Create a new court listing</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Card className="rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+          <h2 className="font-semibold text-gray-900 mb-4">Basic Information</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Court Name
-              </label>
+              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Court Name</label>
               <Input
                 type="text"
                 name="name"
-                placeholder="e.g., Downtown Badminton Club"
+                placeholder="e.g., Court 1"
                 value={formData.name}
                 onChange={handleChange}
                 required
+                className="h-11 rounded-lg border-gray-200 bg-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Location/Area
-              </label>
+              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Location</label>
               <Input
                 type="text"
                 name="location"
-                placeholder="e.g., City Center"
+                placeholder="e.g., Phnom Penh"
                 value={formData.location}
                 onChange={handleChange}
                 required
+                className="h-11 rounded-lg border-gray-200 bg-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Address
-              </label>
+              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Address</label>
               <textarea
                 name="address"
-                placeholder="Enter full address"
+                placeholder="Full address"
                 value={formData.address}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={3}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm min-h-[80px]"
                 required
               />
             </div>
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Pricing & Details</h2>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Number of Courts
-                </label>
-                <select
-                  name="courts"
-                  value={formData.courts}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {[1, 2, 3, 4, 5, 6, 8, 10].map((num) => (
-                    <option key={num} value={num.toString()}>
-                      {num} court{num > 1 ? 's' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price per Hour ($)
-                </label>
-                <Input
-                  type="number"
-                  name="pricePerHour"
-                  placeholder="e.g., 25"
-                  value={formData.pricePerHour}
-                  onChange={handleChange}
-                  min="1"
-                  required
-                />
-              </div>
-            </div>
-
+        <Card className="rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+          <h2 className="font-semibold text-gray-900 mb-4">Pricing</h2>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                name="description"
-                placeholder="Describe your court facility"
-                value={formData.description}
+              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Courts</label>
+              <select
+                name="courts"
+                value={formData.courts}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={4}
+                className="w-full h-11 px-3 rounded-lg border border-gray-200 bg-white text-sm"
+              >
+                {[1, 2, 3, 4, 5, 6].map((num) => (
+                  <option key={num} value={num}>{num}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Price/hr ($)</label>
+              <Input
+                type="number"
+                name="pricePerHour"
+                placeholder="25"
+                value={formData.pricePerHour}
+                onChange={handleChange}
+                min="1"
+                required
+                className="h-11 rounded-lg border-gray-200 bg-white"
               />
             </div>
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Amenities</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+          <h2 className="font-semibold text-gray-900 mb-4">Amenities</h2>
+          <div className="grid grid-cols-3 gap-2">
             {amenitiesOptions.map((amenity) => (
               <button
                 key={amenity}
                 type="button"
                 onClick={() => toggleAmenity(amenity)}
-                className={`p-3 rounded-lg border-2 transition-colors ${
+                className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
                   formData.amenities.includes(amenity)
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-50 text-gray-600 border border-gray-200'
                 }`}
               >
-                <span className="font-medium text-sm">{amenity}</span>
+                {amenity}
               </button>
             ))}
           </div>
         </Card>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 pt-2">
           <Button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+            className="flex-1 h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl"
           >
+            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {loading ? 'Creating...' : 'Create Court'}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => router.back()}
-            variant="outline"
-            className="flex-1"
-          >
-            Cancel
           </Button>
         </div>
       </form>

@@ -1,14 +1,27 @@
 'use client'
 
-import React from "react"
-
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Clock, Users, MapPin, ChevronLeft, AlertCircle, CreditCard, CheckCircle } from 'lucide-react'
+import { ChevronLeft, MapPin, Clock, Users, CheckCircle, AlertCircle, CreditCard } from 'lucide-react'
+import { format, addDays, startOfToday, isSameDay } from 'date-fns'
+
+interface TimeSlot {
+  id: string
+  start_time: string
+  end_time: string
+  is_available: boolean
+}
+
+function formatTime(timeStr: string): string {
+  if (!timeStr) return ''
+  const parts = timeStr.split(':')
+  if (parts.length >= 2) {
+    return `${parts[0]}:${parts[1]}`
+  }
+  return timeStr
+}
 
 export default function BookingPage() {
   const params = useParams()
@@ -16,404 +29,314 @@ export default function BookingPage() {
   const { user } = useAuth()
   const courtId = params.courtId as string
 
-  const [selectedDate, setSelectedDate] = useState('')
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date>(startOfToday())
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
   const [playerCount, setPlayerCount] = useState('2')
-  const [paymentMethod, setPaymentMethod] = useState('aba_payway')
+  const [paymentMethod, setPaymentMethod] = useState<'aba_payway' | 'cash'>('aba_payway')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [court, setCourt] = useState<any>(null)
-  const [timeSlots, setTimeSlots] = useState<any[]>([])
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
-  const [successMessage, setSuccessMessage] = useState('')
   const [bookingCompleted, setBookingCompleted] = useState(false)
 
+  const dates = Array.from({ length: 14 }, (_, i) => addDays(startOfToday(), i))
+
   useEffect(() => {
-    if (courtId) {
-      fetchCourtDetails()
-    }
+    if (courtId) fetchCourtDetails()
   }, [courtId])
 
   useEffect(() => {
-    if (selectedDate && courtId) {
-      fetchTimeSlots()
-    }
+    if (selectedDate && courtId) fetchTimeSlots()
   }, [selectedDate, courtId])
 
   async function fetchCourtDetails() {
     try {
       const response = await fetch(`/api/courts?id=${courtId}`)
-      if (!response.ok) {
-        throw new Error('Court not found')
+      if (response.ok) {
+        setCourt(await response.json())
       }
-      const courtData = await response.json()
-      setCourt(courtData)
     } catch (err) {
       setError('Failed to load court details')
-      console.error('Error fetching court:', err)
     }
   }
 
   async function fetchTimeSlots() {
-    if (!selectedDate || !courtId) return
-    
     setLoadingSlots(true)
     try {
-      const response = await fetch(`/api/time-slots?court_id=${courtId}&date=${selectedDate}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch time slots')
+      const dateStr = format(selectedDate, 'yyyy-MM-dd')
+      const response = await fetch(`/api/time-slots?court_id=${courtId}&date=${dateStr}`)
+      if (response.ok) {
+        const data = await response.json()
+        setTimeSlots(data.timeSlots || [])
       }
-      const data = await response.json()
-      setTimeSlots(data.timeSlots || [])
     } catch (err) {
       setError('Failed to load available time slots')
-      console.error('Error fetching time slots:', err)
     } finally {
       setLoadingSlots(false)
     }
   }
 
-const handleBooking = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Clear previous messages
+  const handleBooking = async () => {
     setError('')
-    setSuccessMessage('')
-    
-    // Validate inputs
-    if (!selectedDate) {
-      setError('Please select a date')
+    if (!selectedDate || !selectedSlot) {
+      setError('Please select date and time slot')
       return
     }
-    
-    if (!selectedSlot) {
-      setError('Please select a time slot')
-      return
-    }
-
     if (!user?.id) {
-      setError('Please log in to make a booking')
-      return
-    }
-
-    if (!court) {
-      setError('Court information not available')
+      setError('Please log in to continue')
       return
     }
 
     setLoading(true)
-    
     try {
-      const bookingData = {
-        time_slot_id: selectedSlot,
-        court_id: courtId,
-        customer_id: user.id,
-        player_count: parseInt(playerCount),
-        booking_date: selectedDate,
-        payment_method: paymentMethod,
-      }
-
-      console.log('Creating booking:', bookingData)
-
       const response = await fetch('/api/bookings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bookingData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          time_slot_id: selectedSlot.id,
+          court_id: courtId,
+          customer_id: user.id,
+          player_count: parseInt(playerCount),
+          booking_date: format(selectedDate, 'yyyy-MM-dd'),
+          payment_method: paymentMethod,
+        }),
       })
 
-      const responseData = await response.json()
-
-      if (!response.ok) {
-        console.error('Booking API error:', responseData)
-        throw new Error(responseData.error || `Failed to create booking (${response.status})`)
+      const result = await response.json()
+      if (response.ok) {
+        setBookingCompleted(true)
+      } else {
+        throw new Error(result.error || 'Failed to create booking')
       }
-
-      console.log('Booking successful:', responseData)
-      
-      // Show success message
-      setSuccessMessage(responseData.message || 'Booking created successfully!')
-      setBookingCompleted(true)
-      
-    } catch (error) {
-      console.error('Booking error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Booking failed. Please try again.'
-      setError(errorMessage)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Booking failed')
     } finally {
       setLoading(false)
     }
   }
 
-if (!court) {
+  if (!court && !error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading court details...</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="w-12 h-12 border-4 border-orange-100 border-t-orange-500 rounded-full animate-spin" />
+        <p className="text-gray-400 font-bold tracking-widest uppercase text-xs">Finding your court...</p>
+      </div>
+    )
+  }
+
+  if (bookingCompleted) {
+    return (
+      <div className="pb-20">
+        <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 px-4">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 shadow-xl shadow-green-100">
+            <CheckCircle className="w-10 h-10" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Booking Confirmed!</h1>
+            <p className="text-gray-500 font-medium mt-2">Your court is ready. See you there!</p>
+          </div>
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <Button
+              onClick={() => router.push('/dashboard/my-bookings')}
+              className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow-lg"
+            >
+              My Bookings
+            </Button>
+            <Button
+              onClick={() => router.push('/dashboard/browse')}
+              variant="outline"
+              className="w-full h-12 border-gray-200 text-gray-600 font-medium rounded-xl"
+            >
+              Book Another
+            </Button>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        Back
-      </button>
+    <div className="pb-24 sm:pb-20 space-y-4 sm:space-y-6">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-400 hover:text-orange-500 font-medium text-sm transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Back
+        </button>
+      </div>
 
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-red-700">{error}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{court?.name}</h1>
+          <p className="text-sm text-gray-500 flex items-center gap-1">
+            <MapPin className="w-3.5 h-3.5" />
+            {court?.club_name || 'Premium Club'}
+          </p>
         </div>
-      )}
-
-      {successMessage && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex gap-3">
-          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-green-700 font-medium">{successMessage}</p>
-            <p className="text-green-600 text-sm mt-1">
-              {paymentMethod === 'aba_payway' 
-                ? 'Your booking has been confirmed and payment processed.'
-                : 'Your booking is pending confirmation. You will receive an email when confirmed.'
-              }
-            </p>
-            <div className="mt-3">
-              <button
-                onClick={() => router.push('/dashboard/my-bookings')}
-                className="text-green-700 hover:text-green-800 font-medium text-sm"
-              >
-                View My Bookings →
-              </button>
-            </div>
-          </div>
+        <div className="text-right">
+          <p className="text-2xl font-bold text-orange-500">${court?.price_per_hour}</p>
+          <p className="text-xs text-gray-400">per hour</p>
         </div>
-      )}
+      </div>
 
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {court.name}
-        </h1>
-        <div className="flex items-center gap-4 text-gray-600">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4" />
-            <span>{court.club_name || 'Badminton Club'}</span>
+      <div className="relative h-40 sm:h-48 rounded-2xl overflow-hidden">
+        {court?.images?.[0] ? (
+          <img src={court.images[0]} alt={court.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+            <MapPin className="w-10 h-10 text-orange-300" />
           </div>
-          <div className="text-gray-400">•</div>
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            <span>${court.price_per_hour}/hour</span>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        <div className="absolute bottom-3 left-3">
+          <div className="flex items-center gap-1 px-2 py-1 bg-white/90 rounded-lg text-xs font-medium text-gray-900">
+            <Clock className="w-3 h-3" />
+            Available Now
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleBooking} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Select Date</h2>
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full"
-              required
-            />
-          </Card>
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-600 text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          {error}
+        </div>
+      )}
 
-{selectedDate && (
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Available Time Slots</h2>
-              {loadingSlots ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : timeSlots.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p>No time slots available for this date</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {timeSlots.map((slot) => (
-                    <button
-                      key={slot.id}
-                      onClick={() => {
-                        if (slot.is_available) {
-                          setSelectedSlot(slot.id)
-                        }
-                      }}
-                      disabled={!slot.is_available}
-                      className={`p-3 rounded-lg border-2 transition-colors ${
-                        selectedSlot === slot.id
-                          ? 'border-blue-600 bg-blue-50'
-                          : slot.is_available
-                            ? 'border-gray-200 hover:border-blue-400'
-                            : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
-                      }`}
-                    >
-                      <div className="font-medium text-sm">
-                        {slot.start_time} - {slot.end_time}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {slot.is_available ? 'Available' : 'Booked'}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </Card>
-          )}
-
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Number of Players</h2>
-            <div className="flex items-center gap-4">
-              <Users className="w-5 h-5 text-gray-400" />
-              <select
-                value={playerCount}
-                onChange={(e) => setPlayerCount(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      <div>
+        <h2 className="text-sm font-semibold text-gray-600 mb-3">Select Date</h2>
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
+          {dates.map((date) => {
+            const isSelected = isSameDay(date, selectedDate)
+            return (
+              <button
+                key={date.toString()}
+                onClick={() => {
+                  setSelectedDate(date)
+                  setSelectedSlot(null)
+                }}
+                className={`flex flex-col items-center justify-center min-w-[60px] h-[70px] rounded-xl transition-all ${
+                  isSelected
+                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-200'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300'
+                }`}
               >
-                {[1, 2, 3, 4, 5, 6].map((num) => (
-                  <option key={num} value={num.toString()}>
-                    {num} {num === 1 ? 'player' : 'players'}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Method</h2>
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors hover:border-blue-400">
-                <input
-                  type="radio"
-                  name="payment_method"
-                  value="aba_payway"
-                  checked={paymentMethod === 'aba_payway'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <div className="flex items-center gap-2 flex-1">
-                  <CreditCard className="w-4 h-4 text-blue-600" />
-                  <div>
-                    <div className="font-medium">ABA PayWay</div>
-                    <div className="text-sm text-gray-500">Pay now - Instant confirmation</div>
-                  </div>
-                </div>
-              </label>
-              
-              <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors hover:border-blue-400">
-                <input
-                  type="radio"
-                  name="payment_method"
-                  value="pay_later"
-                  checked={paymentMethod === 'pay_later'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <div className="flex items-center gap-2 flex-1">
-                  <Clock className="w-4 h-4 text-orange-600" />
-                  <div>
-                    <div className="font-medium">Pay Later</div>
-                    <div className="text-sm text-gray-500">Pay at the venue - Pending confirmation</div>
-                  </div>
-                </div>
-              </label>
-            </div>
-          </Card>
+                <span className={`text-[10px] font-medium uppercase ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
+                  {format(date, 'EEE')}
+                </span>
+                <span className="text-lg font-bold">{format(date, 'd')}</span>
+                <span className={`text-[9px] ${isSelected ? 'text-white/60' : 'text-gray-400'}`}>
+                  {format(date, 'MMM')}
+                </span>
+              </button>
+            )
+          })}
         </div>
+      </div>
 
-        <div>
-          <Card className="p-6 sticky top-4">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Booking Summary</h2>
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between text-gray-600">
-                <span>Date:</span>
-                <span className="font-medium text-gray-900">
-                  {selectedDate || 'Not selected'}
-                </span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Time:</span>
-                <span className="font-medium text-gray-900">
-                  {selectedSlot
-                    ? timeSlots.find((s) => s.id === selectedSlot)?.start_time + ' - ' + timeSlots.find((s) => s.id === selectedSlot)?.end_time
-                    : 'Not selected'}
-                </span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Players:</span>
-                <span className="font-medium text-gray-900">{playerCount}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Payment:</span>
-                <span className="font-medium text-gray-900">
-                  {paymentMethod === 'aba_payway' ? 'ABA PayWay' : 'Pay Later'}
-                </span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Status:</span>
-                <span className={`font-medium ${
-                  paymentMethod === 'aba_payway' ? 'text-green-600' : 'text-yellow-600'
-                }`}>
-                  {paymentMethod === 'aba_payway' ? 'Auto-confirmed' : 'Pending confirmation'}
-                </span>
-              </div>
-<div className="border-t pt-3 flex justify-between">
-                 <span className="font-semibold text-gray-900">Total:</span>
-                 <span className="text-2xl font-bold text-blue-600">
-                   ${court ? court.price_per_hour : '25'}
-                 </span>
-               </div>
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-600">Select Time</h2>
+          {loadingSlots && <div className="w-4 h-4 border-2 border-orange-200 border-t-orange-500 rounded-full animate-spin" />}
+        </div>
+        
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          {timeSlots.length === 0 && !loadingSlots ? (
+            <div className="col-span-full py-6 text-center text-gray-400 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              No slots available for this date
             </div>
-
-            {bookingCompleted ? (
-              <div className="text-center py-4">
-                <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-3" />
-                <p className="text-green-700 font-medium">Booking Completed!</p>
-                <div className="mt-4 space-y-2">
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg"
-                  >
-                    Make Another Booking
-                  </button>
-                  <button
-                    onClick={() => router.push('/dashboard/my-bookings')}
-                    className="w-full border border-blue-600 text-blue-600 hover:bg-blue-50 py-2 px-4 rounded-lg"
-                  >
-                    View My Bookings
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <Button
-                  type="submit"
-                  disabled={loading || !selectedDate || !selectedSlot}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+          ) : (
+            timeSlots.map((slot) => {
+              const isSelected = selectedSlot?.id === slot.id
+              return (
+                <button
+                  key={slot.id}
+                  onClick={() => slot.is_available && setSelectedSlot(slot)}
+                  disabled={!slot.is_available}
+                  className={`py-3 px-2 rounded-xl text-center transition-all text-sm ${
+                    isSelected
+                      ? 'bg-orange-500 text-white shadow-lg shadow-orange-200 font-semibold'
+                      : slot.is_available
+                        ? 'bg-white border border-gray-200 text-gray-700 hover:border-orange-300 font-medium'
+                        : 'bg-gray-100 text-gray-300 cursor-not-allowed line-through'
+                  }`}
                 >
-                  {loading ? 'Processing...' : 'Confirm Booking'}
-                </Button>
-
-                <p className="text-xs text-gray-500 text-center mt-4">
-                  {paymentMethod === 'aba_payway' 
-                    ? 'You will be redirected to ABA PayWay for payment'
-                    : 'Booking will be pending confirmation from the venue'
-                  }
-                </p>
-              </>
-            )}
-          </Card>
+                  {formatTime(slot.start_time)}
+                </button>
+              )
+            })
+          )}
         </div>
-      </form>
+      </div>
+
+      <div>
+        <h2 className="text-sm font-semibold text-gray-600 mb-3">Players</h2>
+        <div className="flex gap-2">
+          {['2', '3', '4'].map((p) => (
+            <button
+              key={p}
+              onClick={() => setPlayerCount(p)}
+              className={`flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+                playerCount === p
+                  ? 'bg-gray-900 text-white shadow-lg'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-sm font-semibold text-gray-600 mb-3">Payment</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setPaymentMethod('aba_payway')}
+            className={`flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+              paymentMethod === 'aba_payway'
+                ? 'bg-orange-500 text-white shadow-lg'
+                : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+            }`}
+          >
+            <CreditCard className="w-4 h-4" />
+            ABA PayWay
+          </button>
+          <button
+            onClick={() => setPaymentMethod('cash')}
+            className={`flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+              paymentMethod === 'cash'
+                ? 'bg-orange-500 text-white shadow-lg'
+                : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+            }`}
+          >
+            💵 Cash
+          </button>
+        </div>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 sm:relative sm:bg-transparent sm:border-0 sm:p-0">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs text-gray-500">Total</p>
+            <p className="text-2xl font-bold text-orange-500">${court?.price_per_hour}</p>
+          </div>
+          <Button
+            onClick={handleBooking}
+            disabled={loading || !selectedSlot}
+            className="flex-1 sm:flex-none h-12 px-8 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow-lg shadow-orange-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Processing...' : 'Confirm Booking'}
+          </Button>
+        </div>
+        <p className="text-center text-xs text-gray-400 mt-2">
+          {paymentMethod === 'aba_payway' ? 'Pay via ABA PayWay' : 'Pay at venue'}
+        </p>
+      </div>
     </div>
   )
 }
