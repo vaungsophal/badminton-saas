@@ -103,8 +103,8 @@ export default function ClubDetailsPage() {
         {club.images?.[0] ? (
           <img src={club.images[0]} alt={club.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-            <MapPin className="w-12 h-12 text-orange-300" />
+          <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center">
+            <MapPin className="w-12 h-12 text-emerald-300" />
           </div>
         )}
         <button
@@ -125,9 +125,9 @@ export default function ClubDetailsPage() {
                 {club.address}
               </p>
             </div>
-            <div className="flex items-center gap-1 px-3 py-1.5 bg-orange-50 rounded-full">
-              <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
-              <span className="text-sm font-bold text-orange-600">{club.rating?.toFixed(1) || '4.5'}</span>
+            <div className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 rounded-full">
+              <Star className="w-4 h-4 text-emerald-500 fill-emerald-500" />
+              <span className="text-sm font-bold text-emerald-600">{club.rating?.toFixed(1) || '4.5'}</span>
               <span className="text-xs text-gray-400">({club.review_count || 0})</span>
             </div>
           </div>
@@ -139,7 +139,7 @@ export default function ClubDetailsPage() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-all ${
                   activeTab === tab
-                    ? 'bg-orange-500 text-white shadow-md'
+                    ? 'bg-emerald-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-600'
                 }`}
               >
@@ -178,8 +178,8 @@ export default function ClubDetailsPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-lg font-bold text-orange-500">${court.price_per_hour}<span className="text-xs font-normal text-gray-400">/hr</span></span>
-                      <Button size="sm" className="h-8 px-4 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg text-sm">
+                      <span className="text-lg font-bold text-emerald-500">${court.price_per_hour}<span className="text-xs font-normal text-gray-400">/hr</span></span>
+                      <Button size="sm" className="h-8 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg text-sm">
                         Book
                       </Button>
                     </div>
@@ -205,7 +205,7 @@ export default function ClubDetailsPage() {
               <h3 className="font-semibold text-gray-900 mb-3">Contact</h3>
               <div className="space-y-3">
                 {club.phone && (
-                  <a href={`tel:${club.phone}`} className="flex items-center gap-3 text-sm text-gray-600 hover:text-orange-500">
+                  <a href={`tel:${club.phone}`} className="flex items-center gap-3 text-sm text-gray-600 hover:text-emerald-500">
                     <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                       <Phone className="w-4 h-4" />
                     </div>
@@ -213,7 +213,7 @@ export default function ClubDetailsPage() {
                   </a>
                 )}
                 {club.email && (
-                  <a href={`mailto:${club.email}`} className="flex items-center gap-3 text-sm text-gray-600 hover:text-orange-500">
+                  <a href={`mailto:${club.email}`} className="flex items-center gap-3 text-sm text-gray-600 hover:text-emerald-500">
                     <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                       <Mail className="w-4 h-4" />
                     </div>
@@ -269,7 +269,7 @@ export default function ClubDetailsPage() {
                 <div key={review.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold text-sm">
+                      <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-bold text-sm">
                         {review.user_name?.charAt(0).toUpperCase() || 'U'}
                       </div>
                       <div>
@@ -281,7 +281,7 @@ export default function ClubDetailsPage() {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`w-3.5 h-3.5 ${star <= review.rating ? 'text-orange-500 fill-orange-500' : 'text-gray-200'}`}
+                          className={`w-3.5 h-3.5 ${star <= review.rating ? 'text-emerald-500 fill-emerald-500' : 'text-gray-200'}`}
                         />
                       ))}
                     </div>

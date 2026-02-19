@@ -147,7 +147,7 @@ async function fetchDashboardStats() {
                 <p className="text-2xl font-bold text-gray-900">${(stats?.overview?.averagePerBooking || 0).toFixed(2)}</p>
                 <p className="text-xs text-gray-500 mt-1">Per booking</p>
               </div>
-              <TrendingUp className="w-8 h-8 text-orange-100" />
+              <TrendingUp className="w-8 h-8 text-emerald-100" />
             </div>
           </CardContent>
         </Card>

@@ -52,29 +52,29 @@ function CustomerDashboard() {
       {/* <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-black flex items-center gap-2">
-            <img src="/logo-main.png" alt="badmintonzone.com" className="h-10" />
+            <img src="/logo.png" alt="badmintonzone.com" className="h-10" />
           </h1>
           <div className="flex items-center gap-1 text-gray-500 text-xs">
             <MapPin className="w-3 h-3" />
             <span>Phnom Penh</span>
           </div>
         </div>
-        <div className="w-10 h-10 rounded-full bg-orange-100 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
-          <Users className="w-5 h-5 text-orange-500" />
+        <div className="w-10 h-10 rounded-full bg-emerald-100 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
+          <Users className="w-5 h-5 text-emerald-500" />
         </div>
       </div> */}
 
       {/* Search Bar */}
       <div className="relative group">
         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-          <svg className="w-4 h-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
         <input
           type="text"
           placeholder="Search courts, clubs..."
-          className="w-full bg-white border border-gray-100 py-3.5 pl-11 pr-4 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-sm transition-all"
+          className="w-full bg-white border border-gray-100 py-3.5 pl-11 pr-4 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-sm transition-all"
         />
       </div>
 
@@ -99,7 +99,7 @@ function CustomerDashboard() {
         {[
           { icon: <MapPin className="w-5 h-5" />, label: 'Book Court', color: 'bg-green-500' },
           { icon: <TrendingUp className="w-5 h-5" />, label: 'Buy Racket', color: 'bg-blue-500' },
-          { icon: <StarsIcon className="w-5 h-5" />, label: 'Take Lesson', color: 'bg-orange-500' },
+          { icon: <StarsIcon className="w-5 h-5" />, label: 'Take Lesson', color: 'bg-emerald-500' },
         ].map((action, i) => (
           <button key={i} className="flex flex-col items-center gap-3 p-4 bg-white rounded-2xl border border-gray-50 shadow-sm hover:shadow-md transition-all active:scale-95 group">
             <div className={`${action.color} p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform`}>
@@ -116,7 +116,7 @@ function CustomerDashboard() {
           <h2 className="text-lg font-bold text-gray-900">Featured Courts</h2>
           <button
             onClick={() => router.push('/dashboard/browse')}
-            className="text-orange-500 text-sm font-bold hover:underline"
+            className="text-emerald-500 text-sm font-bold hover:underline"
           >
             View All
           </button>
@@ -142,15 +142,15 @@ function CustomerDashboard() {
                       <MapPin className="w-8 h-8 text-gray-400" />
                     </div>
                   )}
-                  <div className="absolute top-3 left-3 bg-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  <div className="absolute top-3 left-3 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
                     Featured
                   </div>
                 </div>
                 <div className="p-4 space-y-1">
-                  <h3 className="font-bold text-gray-900 group-hover:text-orange-500 transition-colors">{court.name}</h3>
+                  <h3 className="font-bold text-gray-900 group-hover:text-emerald-500 transition-colors">{court.name}</h3>
                   <p className="text-xs text-gray-500">{court.club_name || 'Racket Badminton Club'}</p>
                   <div className="flex justify-between items-center pt-2">
-                    <span className="text-orange-500 font-black">${court.price_per_hour}/hr</span>
+                    <span className="text-emerald-500 font-black">${court.price_per_hour}/hr</span>
                     <span className="text-[10px] text-green-600 font-bold flex items-center gap-1">
                       <Clock className="w-3 h-3" /> Open Now
                     </span>
@@ -184,7 +184,7 @@ function CustomerDashboard() {
         <div className="space-y-3">
           {featuredCourts.slice(0, 3).map((court, i) => (
             <div key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-50 shadow-sm">
-              <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
                 <Clock className="w-6 h-6" />
               </div>
               <div className="flex-1 min-w-0">
@@ -198,7 +198,7 @@ function CustomerDashboard() {
                 <Button
                   size="sm"
                   onClick={() => router.push(`/dashboard/book/${court.id}`)}
-                  className="bg-orange-500 hover:bg-orange-600 text-white font-bold h-8 px-4 rounded-lg shadow-lg shadow-orange-100 active:scale-95"
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-8 px-4 rounded-lg shadow-lg shadow-emerald-100 active:scale-95"
                 >
                   Book
                 </Button>
@@ -234,7 +234,7 @@ function ClubOwnerDashboard() {
         <div className="flex items-center gap-3">
           <Button
             onClick={() => router.push('/dashboard/courts/new')}
-            className="h-12 px-6 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl shadow-xl shadow-orange-100 transition-all active:scale-95 flex items-center gap-2"
+            className="h-12 px-6 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl shadow-xl shadow-emerald-100 transition-all active:scale-95 flex items-center gap-2"
           >
             Add New Court
           </Button>
@@ -254,7 +254,7 @@ function ClubOwnerDashboard() {
           label="Active Courts"
           value="4"
           trend="+1 this month"
-          color="orange"
+          color="emerald"
         />
         <StatCard
           icon={Clock}
@@ -275,7 +275,7 @@ function ClubOwnerDashboard() {
       <div className="bg-white rounded-[2.5rem] p-8 border border-gray-50 shadow-sm">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-xl font-black text-gray-900">Recent Activity</h2>
-          <Button variant="ghost" className="text-orange-500 font-bold hover:bg-orange-50">View Report</Button>
+          <Button variant="ghost" className="text-emerald-500 font-bold hover:bg-emerald-50">View Report</Button>
         </div>
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
@@ -298,9 +298,9 @@ function ClubOwnerDashboard() {
   )
 }
 
-function StatCard({ icon: Icon, label, value, trend, color }: { icon: any, label: string, value: string, trend: string, color: 'orange' | 'blue' | 'green' | 'purple' }) {
+function StatCard({ icon: Icon, label, value, trend, color }: { icon: any, label: string, value: string, trend: string, color: 'emerald' | 'blue' | 'green' | 'purple' }) {
   const colorStyles = {
-    orange: 'bg-orange-50 text-orange-500',
+    emerald: 'bg-emerald-50 text-emerald-500',
     blue: 'bg-blue-50 text-blue-500',
     green: 'bg-green-50 text-green-500',
     purple: 'bg-purple-50 text-purple-500'
@@ -334,14 +334,14 @@ function AdminDashboard() {
     <div className="space-y-8 sm:space-y-10">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight text-orange-500">Platform Admin</h1>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight text-emerald-500">Platform Admin</h1>
           <p className="text-gray-500 font-medium">Global racket network management</p>
         </div>
 
         <div className="flex items-center gap-3">
           <Button
             onClick={() => router.push('/dashboard/admin/courts')}
-            className="h-12 px-6 bg-gray-900 hover:bg-orange-600 text-white font-black rounded-2xl shadow-xl shadow-gray-200 transition-all active:scale-95 flex items-center gap-2"
+            className="h-12 px-6 bg-gray-900 hover:bg-emerald-600 text-white font-black rounded-2xl shadow-xl shadow-gray-200 transition-all active:scale-95 flex items-center gap-2"
           >
             Manage Courts
           </Button>
@@ -361,7 +361,7 @@ function AdminDashboard() {
           label="Total Users"
           value="1,234"
           trend="↑ 45 today"
-          color="orange"
+          color="emerald"
         />
         <StatCard
           icon={MapPin}
@@ -381,7 +381,7 @@ function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="rounded-[2.5rem] p-8 border border-gray-50 shadow-sm overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full -mr-16 -mt-16" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16" />
           <h2 className="text-xl font-black text-gray-900 mb-6">System Health</h2>
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -401,10 +401,10 @@ function AdminDashboard() {
           </div>
         </Card>
 
-        <Card className="rounded-[2.5rem] p-8 border border-gray-50 shadow-sm bg-orange-500 text-white">
+        <Card className="rounded-[2.5rem] p-8 border border-gray-50 shadow-sm bg-emerald-500 text-white">
           <h2 className="text-xl font-black mb-2">Pro Subscription</h2>
-          <p className="text-orange-100 font-medium text-sm mb-6">You have 12 pending club owner applications to review.</p>
-          <Button className="w-full bg-white text-orange-500 hover:bg-orange-50 font-black rounded-2xl h-12 shadow-xl shadow-orange-600/20">Review Applications</Button>
+          <p className="text-emerald-100 font-medium text-sm mb-6">You have 12 pending club owner applications to review.</p>
+          <Button className="w-full bg-white text-emerald-500 hover:bg-emerald-50 font-black rounded-2xl h-12 shadow-xl shadow-emerald-600/20">Review Applications</Button>
         </Card>
       </div>
     </div>

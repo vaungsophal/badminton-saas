@@ -163,7 +163,7 @@ return (
                                                 <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${user.role === 'admin'
                                                     ? 'bg-purple-100 text-purple-700'
                                                     : user.role === 'club_owner'
-                                                        ? 'bg-orange-100 text-orange-700'
+                                                        ? 'bg-emerald-100 text-emerald-700'
                                                         : 'bg-blue-100 text-blue-700'
                                                     }`}>
                                                     {user.role}

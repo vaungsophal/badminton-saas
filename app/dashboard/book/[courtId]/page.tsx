@@ -119,7 +119,7 @@ export default function BookingPage() {
   if (!court && !error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-12 h-12 border-4 border-orange-100 border-t-orange-500 rounded-full animate-spin" />
+        <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-500 rounded-full animate-spin" />
         <p className="text-gray-400 font-bold tracking-widest uppercase text-xs">Finding your court...</p>
       </div>
     )
@@ -139,7 +139,7 @@ export default function BookingPage() {
           <div className="flex flex-col gap-3 w-full max-w-xs">
             <Button
               onClick={() => router.push('/dashboard/my-bookings')}
-              className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow-lg"
+              className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-lg"
             >
               My Bookings
             </Button>
@@ -161,7 +161,7 @@ export default function BookingPage() {
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-400 hover:text-orange-500 font-medium text-sm transition-colors"
+          className="flex items-center gap-2 text-gray-400 hover:text-emerald-500 font-medium text-sm transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           Back
@@ -177,7 +177,7 @@ export default function BookingPage() {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-bold text-orange-500">${court?.price_per_hour}</p>
+          <p className="text-2xl font-bold text-emerald-500">${court?.price_per_hour}</p>
           <p className="text-xs text-gray-400">per hour</p>
         </div>
       </div>
@@ -186,8 +186,8 @@ export default function BookingPage() {
         {court?.images?.[0] ? (
           <img src={court.images[0]} alt={court.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-            <MapPin className="w-10 h-10 text-orange-300" />
+          <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center">
+            <MapPin className="w-10 h-10 text-emerald-300" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -220,8 +220,8 @@ export default function BookingPage() {
                 }}
                 className={`flex flex-col items-center justify-center min-w-[60px] h-[70px] rounded-xl transition-all ${
                   isSelected
-                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-200'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300'
+                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-emerald-300'
                 }`}
               >
                 <span className={`text-[10px] font-medium uppercase ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
@@ -240,7 +240,7 @@ export default function BookingPage() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-gray-600">Select Time</h2>
-          {loadingSlots && <div className="w-4 h-4 border-2 border-orange-200 border-t-orange-500 rounded-full animate-spin" />}
+          {loadingSlots && <div className="w-4 h-4 border-2 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />}
         </div>
         
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -258,9 +258,9 @@ export default function BookingPage() {
                   disabled={!slot.is_available}
                   className={`py-3 px-2 rounded-xl text-center transition-all text-sm ${
                     isSelected
-                      ? 'bg-orange-500 text-white shadow-lg shadow-orange-200 font-semibold'
+                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 font-semibold'
                       : slot.is_available
-                        ? 'bg-white border border-gray-200 text-gray-700 hover:border-orange-300 font-medium'
+                        ? 'bg-white border border-gray-200 text-gray-700 hover:border-emerald-300 font-medium'
                         : 'bg-gray-100 text-gray-300 cursor-not-allowed line-through'
                   }`}
                 >
@@ -299,7 +299,7 @@ export default function BookingPage() {
             onClick={() => setPaymentMethod('aba_payway')}
             className={`flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
               paymentMethod === 'aba_payway'
-                ? 'bg-orange-500 text-white shadow-lg'
+                ? 'bg-emerald-500 text-white shadow-lg'
                 : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
             }`}
           >
@@ -310,7 +310,7 @@ export default function BookingPage() {
             onClick={() => setPaymentMethod('cash')}
             className={`flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
               paymentMethod === 'cash'
-                ? 'bg-orange-500 text-white shadow-lg'
+                ? 'bg-emerald-500 text-white shadow-lg'
                 : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
             }`}
           >
@@ -323,12 +323,12 @@ export default function BookingPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs text-gray-500">Total</p>
-            <p className="text-2xl font-bold text-orange-500">${court?.price_per_hour}</p>
+            <p className="text-2xl font-bold text-emerald-500">${court?.price_per_hour}</p>
           </div>
           <Button
             onClick={handleBooking}
             disabled={loading || !selectedSlot}
-            className="flex-1 sm:flex-none h-12 px-8 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow-lg shadow-orange-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 sm:flex-none h-12 px-8 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Processing...' : 'Confirm Booking'}
           </Button>

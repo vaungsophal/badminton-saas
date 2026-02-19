@@ -15,16 +15,16 @@ const _geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'badmintonzone.com | Premium Badminton Court Booking',
+  title: 'BadmintonZone | Premium Badminton Court Booking',
   description: 'Book world-class badminton courts easily. The premium experience for racket athletes.',
   icons: {
     icon: [
       {
-        url: '/logo-main.png',
+        url: '/logo.png',
         media: '(prefers-color-scheme: light)',
       },
       {
-        url: '/logo-main.png',
+        url: '/logo.png',
         media: '(prefers-color-scheme: dark)',
       },
       {
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
         type: 'image/svg+xml',
       },
     ],
-    apple: '/apple-icon.png',
+    apple: '/logo-icon.png',
   },
 }
 

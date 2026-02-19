@@ -37,7 +37,7 @@ export default function PaymentPage() {
   if (loading || !bookingData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-12 h-12 border-4 border-orange-100 border-t-orange-500 rounded-full animate-spin" />
+        <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-500 rounded-full animate-spin" />
         <p className="text-gray-400 font-bold tracking-widest uppercase text-xs">Loading payment...</p>
       </div>
     )
@@ -48,7 +48,7 @@ export default function PaymentPage() {
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-400 hover:text-orange-500 font-medium text-sm transition-colors"
+          className="flex items-center gap-2 text-gray-400 hover:text-emerald-500 font-medium text-sm transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           Back
@@ -77,7 +77,7 @@ export default function PaymentPage() {
           </div>
           <div className="flex justify-between py-3">
             <span className="font-semibold text-gray-900">Total</span>
-            <span className="text-2xl font-bold text-orange-500">${bookingData.amount}</span>
+            <span className="text-2xl font-bold text-emerald-500">${bookingData.amount}</span>
           </div>
         </div>
       </Card>

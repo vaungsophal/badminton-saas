@@ -59,7 +59,7 @@ export default function NewCourtPage() {
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-400 hover:text-orange-500 font-medium text-sm transition-colors"
+          className="flex items-center gap-2 text-gray-400 hover:text-emerald-500 font-medium text-sm transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           Back
@@ -157,7 +157,7 @@ export default function NewCourtPage() {
                 onClick={() => toggleAmenity(amenity)}
                 className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
                   formData.amenities.includes(amenity)
-                    ? 'bg-orange-500 text-white shadow-md'
+                    ? 'bg-emerald-500 text-white shadow-md'
                     : 'bg-gray-50 text-gray-600 border border-gray-200'
                 }`}
               >
@@ -171,7 +171,7 @@ export default function NewCourtPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="flex-1 h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl"
+            className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl"
           >
             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {loading ? 'Creating...' : 'Create Court'}

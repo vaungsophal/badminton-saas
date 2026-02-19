@@ -31,14 +31,14 @@ export function BottomNav() {
                         onClick={() => item.href && router.push(item.href)}
                         className={`flex flex-col items-center justify-center gap-1 px-4 py-1 rounded-2xl transition-all ${
                             isActive 
-                                ? 'text-orange-500' 
+                                ? 'text-emerald-500' 
                                 : 'text-gray-400 hover:text-gray-600'
                         }`}
                     >
-                        <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-orange-50' : ''}`}>
+                        <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-emerald-50' : ''}`}>
                             <Icon className="w-5 h-5" />
                         </div>
-                        <span className={`text-[10px] font-medium ${isActive ? 'text-orange-500' : 'text-gray-400'}`}>
+                        <span className={`text-[10px] font-medium ${isActive ? 'text-emerald-500' : 'text-gray-400'}`}>
                             {item.label}
                         </span>
                     </button>

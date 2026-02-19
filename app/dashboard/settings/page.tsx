@@ -96,7 +96,7 @@ export default function SettingsPage() {
         <Card className="rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="p-4 sm:p-5 space-y-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500">
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500">
                 <Shield className="w-5 h-5" />
               </div>
               <div>
@@ -242,7 +242,7 @@ export default function SettingsPage() {
                     <p className="text-sm font-medium text-gray-900">{item.label}</p>
                     <p className="text-xs text-gray-500">{item.desc}</p>
                   </div>
-                  <button className="w-11 h-6 bg-orange-500 rounded-full relative transition-colors">
+                  <button className="w-11 h-6 bg-emerald-500 rounded-full relative transition-colors">
                     <span className="absolute right-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow" />
                   </button>
                 </div>
@@ -254,7 +254,7 @@ export default function SettingsPage() {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow-lg shadow-orange-100 transition-all"
+          className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-100 transition-all"
         >
           {saving ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />

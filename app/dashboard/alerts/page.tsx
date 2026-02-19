@@ -61,8 +61,8 @@ export default function AlertsPage() {
           <p className="text-sm text-gray-500">{notifications.length} total</p>
         </div>
         {unreadCount > 0 && (
-          <div className="px-3 py-1.5 bg-orange-50 rounded-full">
-            <span className="text-xs font-semibold text-orange-600">{unreadCount} new</span>
+          <div className="px-3 py-1.5 bg-emerald-50 rounded-full">
+            <span className="text-xs font-semibold text-emerald-600">{unreadCount} new</span>
           </div>
         )}
       </div>
@@ -93,7 +93,7 @@ function NotificationCard({ notification }: { notification: Notification }) {
 
   const colors = {
     booking: 'bg-blue-50 text-blue-500',
-    reminder: 'bg-orange-50 text-orange-500',
+    reminder: 'bg-emerald-50 text-emerald-500',
     cancellation: 'bg-red-50 text-red-500',
     confirmation: 'bg-green-50 text-green-500',
   }
@@ -102,7 +102,7 @@ function NotificationCard({ notification }: { notification: Notification }) {
   const colorClass = colors[notification.type] || 'bg-gray-50 text-gray-500'
 
   return (
-    <div className={`bg-white rounded-2xl border p-4 transition-all ${notification.read ? 'border-gray-100' : 'border-orange-200 shadow-sm'}`}>
+    <div className={`bg-white rounded-2xl border p-4 transition-all ${notification.read ? 'border-gray-100' : 'border-emerald-200 shadow-sm'}`}>
       <div className="flex gap-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${colorClass}`}>
           <Icon className="w-5 h-5" />
@@ -111,7 +111,7 @@ function NotificationCard({ notification }: { notification: Notification }) {
           <div className="flex items-start justify-between gap-2">
             <h3 className="font-semibold text-gray-900 text-sm">{notification.title}</h3>
             {!notification.read && (
-              <span className="w-2 h-2 bg-orange-500 rounded-full shrink-0 mt-1.5" />
+              <span className="w-2 h-2 bg-emerald-500 rounded-full shrink-0 mt-1.5" />
             )}
           </div>
           <p className="text-xs text-gray-500 mt-0.5">{notification.message}</p>
